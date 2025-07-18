@@ -21,7 +21,6 @@ Description=SystemImager's BitTorrent tracker daemon
 
 [Service]
 # EnvironmentFile for bittorrent daemons
-EnvironmentFile=/etc/systemimager/bittorrent.conf
 PIDFile=/var/run/systemimager-server-bittorrent-tracker.pid
 
 [Install]

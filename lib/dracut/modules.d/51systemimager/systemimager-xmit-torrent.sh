@@ -38,6 +38,17 @@ function init_transfer() {
     [ -z "${STAGING_DIR}" ] && STAGING_DIR=/tmp/tmpfs_staging
     # create the staging dir if needed
     mkdir -p ${STAGING_DIR} || shellout "Failed to create ${STAGING_DIR}"
+	# Initial torrent client configuration
+	mkdir -p ${STAGING_DIR}/transmission-cli
+	cat > ${STAGING_DIR}/transmission-cli/settings.json <<EOF
+{
+	"dht-enabled": true,
+	"pex-enabled": true,
+	"utp-enabled": true,
+	"idle-seeding-limit": 30,
+	"idle-seeding-limit-enabled": false
+}
+EOF
     # get image size to download
     IMAGESIZE=`get_image_size`
     write_variables # keep track of $STAGING_DIR and $IMAGESIZE variable accross dracut scripts logic
@@ -75,61 +86,65 @@ function get_image_size() {
 ################################################################################
 download_image() {
 	loginfo "Downloading image"
-        torrent=${TORRENTS_DIR}/$1.torrent
-        destination=$2
+	torrent=${TORRENTS_DIR}/$1.torrent
+	destination=$2
 
-        # Bittorrent log file
-        bittorrent_log=/tmp/bittorrent-`basename ${torrent}`.log
-        # Time to poll bittorrent events
-        bittorrent_polling_time=${BITTORRENT_POLLING_TIME:-5}
-        # Wait after the download is finished to seed the other peers
-        bittorrent_seed_wait=${BITTORRENT_SEED_WAIT:-n}
-        # Minimum upload rate threshold (in KB/s), if lesser stop seeding
-        bittorrent_upload_min=${BITTORRENT_UPLOAD_MIN:-50}
+	# Bittorrent log file
+	bittorrent_log=/tmp/bittorrent-`basename ${torrent}`.log
+	# Time to poll bittorrent events
+	bittorrent_polling_time=${BITTORRENT_POLLING_TIME:-5}
+	# Wait after the download is finished to seed the other peers
+	bittorrent_seed_wait=${BITTORRENT_SEED_WAIT:-n}
+	# Minimum upload rate threshold (in KB/s), if lesser stop seeding
+	#bittorrent_upload_min=${BITTORRENT_UPLOAD_MIN:-50}
 
-        # Start downloading.
-        /bin/bittorrent-console --no_upnp --no_start_trackerless_client --max_upload_rate 0 --display_interval 1 --rerequest_interval 1 --bind ${IPADDR} --save_in ${destination} ${torrent} > $bittorrent_log &
-        pid=$!
-        if [ ! -d /proc/$pid ]; then
-            logmsg "error: couldn't run bittorrent-console!"
-            shellout
-        fi
-        unset pid
+	# Start downloading.
+	#/bin/bittorrent-console --no_upnp --no_start_trackerless_client --max_upload_rate 0 --display_interval 1 --rerequest_interval 1 --bind ${IPADDR} --save_in ${destination} ${torrent} > $bittorrent_log &
+	/usr/bin/transmission-cli -U -D -g ${STAGING_DIR}/transmission-cli -w ${destination} ${torrent} >& ${bittorrent_log} &
+	pid=$!
+	if [ ! -d /proc/$pid ]; then
+		logmsg "error: couldn't run transmission-cli (torrent client)!"
+	    shellout
+	fi
+	unset pid
 
-        # Wait for BitTorrent log to appear.
-        while [ ! -e $bittorrent_log ]; do
-            sleep 1
-        done
-         # Checking download...
-        while :; do
-            while :; do
-                status=`grep 'percent done:' $bittorrent_log | sed -ne '$p' | sed 's/percent done: *//' | sed -ne '/^[0-9]*\.[0-9]*$/p'`
-                [ ! -z "$status" ] && break
-            done
-            logmsg "percent done: $status %"
-            if [ "$status" = "100.0" ]; then
-                # Sleep until upload rate reaches the minimum threshold
-                while [ "$bittorrent_seed_wait" = "y" ]; do
-                    sleep $bittorrent_polling_time
-                    while :; do
-                        upload_rate=`grep 'upload rate:' $bittorrent_log | sed -ne '$p' | sed 's/upload rate: *\([0-9]*\)\.[0-9]* .*$/\1/' | sed -ne '/^\([0-9]*\)$/p'`
-                        [ ! -z $upload_rate ] && break
-                    done
-                    logmsg "upload rate: $upload_rate KB/s"
-                    [ $upload_rate -lt $bittorrent_upload_min ] && break
-                done
-                logmsg "Download completed"
-                unset bittorrent_log upload_rate counter
-                break
-            fi
-            sleep $bittorrent_polling_time
-        done
+	# Wait for BitTorrent log to appear.
+	while [ ! -e $bittorrent_log ]; do
+	    sleep 1
+	done
+	 # Checking download...
+	while :; do
+	    while :; do
+			status=`tr '\r' '\n' < ${bittorrent_log} | grep "Progress:" | tail -n 1 | cut -d',' -f1 | cut -d' ' -f2`| tr -d '%'
+			[ ! -z "$status" ] && break
+	    done
+	    logmsg "percent done: $status %"
+	    if [ "$status" = "100.0" ]; then
+			logmsg "Download completed"
+		# Sleep until no peer uploads
+			if [ "$bittorrent_seed_wait" = "y" ]; then
+				logmsg "Waiting for peers to complete download"
+		    	while :; do
+		    		sleep $bittorrent_polling_time
+					upload_peers_count=`tr '\r' '\n' </tmp/transmission.log| grep "Seeding, uploading to" | tail -n 1 | cut -d' ' -f4`
+					[ ${upload_peers_count:=0} -eq 0 ] && break
+		    	done
+		    	logmsg "Upload peers: $upload_peers_count"
+		    	[ ${upload_peers_count:=0} -eq 0 ] && break
+			fi
+			logmsg "No peers to seed. Exitting torrent client."
+			break
+	    fi
+	    sleep $bittorrent_polling_time
+	done
 
-        unset bittorrent_polling_time
-        unset bittorrent_seed_wait
-        unset bittorrent_upload_min
-        unset torrent
-        unset destination
+	unset bittorrent_log
+	unset upload_peers_count
+	unset bittorrent_polling_time
+	unset bittorrent_seed_wait
+	#unset bittorrent_upload_min
+	unset torrent
+	unset destination
 }
 
 #################################################################################
@@ -141,8 +156,34 @@ download_image() {
 #
 function extract_image() {
 	loginfo "Extracting image to /sysroot"
-	#send_monitor_msg "status=107:speed=0" # 107=extracting
 	update_client_status 107 0 # 107=extracting
+	cd /sysroot
+	# TODO: handle multiple layers (a torrent with multiple layers)
+	IMAGE_TARBALL=`/usr/bin/transmission-show ${IMAGENAME}.torrent | sed -n '/^FILES$/,$p' | tail -n +2 | sed '/^$/d;s/^  //;s/ (.*$//'`
+	# BUG: if torrent contains more than a single archive, IMAGE_TARBALL will contain all of them leading to error
+	case ${IMAGE_TARBALL} in
+		*.tar)
+			tar xpvf ${IMAGE_TARBALL}
+			;;
+		*.tar.gz)
+			tar xpvzf ${IMAGE_TARBALL}
+			;;
+		*.tar.bz2)
+			tar xpvjf ${IMAGE_TARBALL}
+			;;
+		*.tar.xz)
+			tar xpvJf ${IMAGE_TARBALL}
+			;;
+		*.zip)
+			unzip ${IMAGE_TARBALL}
+			;;
+		*)
+			logerror "Unknown archive type"
+			;;
+	esac
+	loginfo "Cleaning up image tarball"
+	rm -f ${IMAGE_TARBALL}
+
 }
 
 ################################################################################
@@ -153,7 +194,6 @@ function extract_image() {
 #
 function install_overrides() {
 	loginfo "Installing overrides"
-	loginfo "Installing overrides"
 }
 
 ################################################################################
@@ -163,6 +203,7 @@ function install_overrides() {
 #
 ################################################################################
 function terminate_transfer() {
+	# TODO: déplacer l'attente du seeding ici (ça permet d'extraire plus vite)
 	loginfo "Terminating transfer processes."
 }
 
@@ -182,20 +223,20 @@ _get_torrents_directory() {
     loginfo "Retrieving ${TORRENTS_DIR} directory..."
 
     if [ -n "$FLAMETHROWER_DIRECTORY_PORTBASE" ]; then
-        #
-        # We're using Multicast, so we should already have a directory 
-        # full of scripts.  Break out here, so that we don't try to pull
-        # the scripts dir again (that would be redundant).
-        #
-        MODULE_NAME="autoinstall_torrents"
-        DIR="${TORRENTS_DIR}"
-        RETRY=7
-        flamethrower_client
+	#
+	# We're using Multicast, so we should already have a directory 
+	# full of scripts.  Break out here, so that we don't try to pull
+	# the scripts dir again (that would be redundant).
+	#
+		MODULE_NAME="autoinstall_torrents"
+		DIR="${TORRENTS_DIR}"
+		RETRY=7
+		flamethrower_client
     else
-        mkdir -p ${TORRENTS_DIR}
-        CMD="rsync -a ${IMAGESERVER}::${TORRENTS}/ ${TORRENTS_DIR}/"
-        logdetail "$CMD"
-        $CMD || shellout "Failed to retreive ${TORRENTS_DIR} directory..."
+		mkdir -p ${TORRENTS_DIR}
+		CMD="rsync -a ${IMAGESERVER}::${TORRENTS}/ ${TORRENTS_DIR}/"
+		logdetail "$CMD"
+		$CMD || shellout "Failed to retreive ${TORRENTS_DIR} directory..."
     fi
 }
 
@@ -208,8 +249,8 @@ _get_torrents_directory() {
 bittorrent_autodetect_staging_dir() {
     torrent=${TORRENTS_DIR}/$1.torrent
     if [ ! -f $torrent ]; then
-        logmsg "warning: torrent file $torrent does not exist!"
-        return
+		logmsg "warning: torrent file $torrent does not exist!"
+		return
     fi
 
     # List of preferred staging directory (/tmp = ramdisk staging)
@@ -224,10 +265,10 @@ bittorrent_autodetect_staging_dir() {
 
     # Find a directory to host the image tarball
     for dir in $preferred_dirs; do
-        [ ! -d $dir ] && continue;
-        dir_space=`df $dir 2>/dev/null | sed '1d' | sed 's/[[:space:]]\+/ /g' | cut -d' ' -f4 | sed -ne '$p'`
-        [ -z $dir_space ] && continue
-        [ $torrent_size -lt $dir_space ] && echo $dir && return
+		[ ! -d $dir ] && continue;
+		dir_space=`df $dir 2>/dev/null | sed '1d' | sed 's/[[:space:]]\+/ /g' | cut -d' ' -f4 | sed -ne '$p'`
+		[ -z $dir_space ] && continue
+		[ $torrent_size -lt $dir_space ] && echo $dir && return
     done
 }
 
@@ -239,7 +280,7 @@ bittorrent_autodetect_staging_dir() {
 #
 bittorrent_stop() {
     # Try to kill all the BitTorrent processes
-    btclient="bittorrent-console"
+    btclient="transmission-cli"
 
     logmsg "killing BitTorrent client..."
     killall -15 $btclient >/dev/null 2>&1

@@ -87,6 +87,8 @@
 %define pkg_ncat nmap
 %define pkg_pidof sysvinit-tools
 %define pkg_dhcpd dhcp
+%define pkg_transmission_cli transmission-cli
+%define pkg_transmission_daemon transmission-daemon
 %define web_vhosts_dir %{_sysconfdir}/httpd/conf.d
 %endif
 %if 0%{?rhel} == 7
@@ -100,6 +102,8 @@
 %define pkg_ncat nmap-ncat
 %define pkg_pidof sysvinit-tools
 %define pkg_dhcpd dhcp
+%define pkg_transmission_cli transmission-cli
+%define pkg_transmission_daemon transmission-daemon
 %define web_vhosts_dir %{_sysconfdir}/httpd/conf.d
 %endif
 %%if 0%{?rhel} >= 8
@@ -113,6 +117,8 @@
 %define pkg_ncat nmap-ncat
 %define pkg_pidof procps-ng
 %define pkg_dhcpd dhcp-server
+%define pkg_transmission_cli transmission-cli
+%define pkg_transmission_daemon transmission-daemon
 %define web_vhosts_dir %{_sysconfdir}/httpd/conf.d
 %endif
 %if 0%{?fedora} > 26
@@ -126,6 +132,8 @@
 %define pkg_ncat nmap-ncat
 %define pkg_pidof procps-ng
 %define pkg_dhcpd dhcp-server
+%define pkg_transmission_cli transmission-cli
+%define pkg_transmission_daemon transmission-daemon
 %define web_vhosts_dir %{_sysconfdir}/httpd/conf.d
 %endif
 %if %is_suse%{?is_opensuse}
@@ -139,6 +147,8 @@
 %define pkg_ncat ncat
 %define pkg_pidof sysvinit-tools
 %define pkg_dhcpd dhcp-server
+%define pkg_transmission_cli transmission
+%define pkg_transmission_daemon transmission-daemon
 %define web_vhosts_dir %{_sysconfdir}/apache2/vhosts.d
 %endif
 
@@ -380,6 +390,7 @@ BuildRequires: dracut-network
 %if %is_suse%{?is_opensuse}
 BuildRequires: plymouth-dracut
 %endif
+BuildRequires: %pkg_transmission_cli
 BuildRequires: perl-JSON
 BuildRequires: dracut
 BuildRequires: plymouth-plugin-script, plymouth-plugin-label
@@ -400,7 +411,6 @@ BuildRequires: %pkg_sshd
 BuildRequires: ncurses, /usr/bin/awk, kbd
 BuildRequires: gettext, bc
 BuildRequires: kernel, coreutils
-BuildRequires: rtorrent
 BuildRequires: cryptsetup
 BuildRequires: udpcast, flamethrower
 %if 0%{?rhel} == 6
@@ -414,7 +424,6 @@ BuildRequires: socat
 # Debug tools (for scripts)
 BuildRequires: strace, lsof
 BuildRequires: %{pkg_pidof}
-
 %if %is_ps3
 BuildRequires: dtc
 %endif
@@ -490,7 +499,9 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}, perl, perl(Getopt::Long)
-#BuildRequires: cx_Freeze
+# transmission-cli pkg needed for transmission-create command
+Requires: %pkg_transmission_cli
+Requires: %pkg_transmission_daemon
 # If systemd
 %if 0%{?_unitdir:1}
 %systemd_requires
@@ -556,10 +567,11 @@ Requires: %pkg_sshd
 Requires: ncurses, /usr/bin/awk, kbd
 Requires: gettext, bc
 Requires: kernel, coreutils
-Requires: rtorrent
 Requires: systemimager-initrd_template
 Requires: cryptsetup
 Requires: udpcast, flamethrower
+# transmission-cli pkg needed for transmission-cli command
+Requires: %pkg_transmission_cli
 %if 0%{?rhel} == 6
 Requires:  udev
 %else
@@ -1090,6 +1102,7 @@ fi
 %dir %{_var}/lib/systemimager/tarballs
 %dir %{_var}/lib/systemimager/torrents
 %config %{_sysconfdir}/systemimager/bittorrent.conf
+%config %{_sysconfdir}/systemimager/bittorrent.json
 %if 0%{?_unitdir:1}
 %{_unitdir}/systemimager-server-bittorrent.service
 %{_unitdir}/systemimager-server-bittorrent-seeder.service

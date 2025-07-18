@@ -171,7 +171,7 @@ write_variables # Need to save that for non systemd dracut (we are run from udev
 # Install the systemimager-montor-rebooted service before we umount client filesystems.
 /lib/systemimager-install-rebooted-script
 
-# Unmount system filesystems
+# Unmount system filesystems (/sysroot is still mounted)
 umount_os_filesystems_from_sysroot
 
 # Unmount imaged OS filesystems (they are listed in initramfs:/etc/fstab.systemimager)
@@ -190,6 +190,11 @@ then
 	loginfo "Unmounting ${RPC_PIPEFS_MOUNTED} filesystem from image"
 	umount ${RPC_PIPEFS_MOUNTED} || logerror "Failed to umount ${RPC_PIPEFS_MOUNTED}"
 fi
+
+# Stops any remaining transfer processes (ssh tunnel, torrent seeder, ...) before we umount /sysroot
+# Note: /sysroot/tmp can often be the staging dir.
+getarg 'si.break=terminate-transfer' && logwarn "Break terminate-transfer" && interactive_shell
+terminate_transfer
 
 loginfo "Unmounting imaged OS filesystems"
 getarg 'si.break=umount-client' && logwarn "Break umount-client" && interactive_shell
@@ -231,10 +236,6 @@ if [ -n "$MONITOR_SERVER" ]; then
         sleep 10
     fi
 fi
-
-# Stops any remaining transfer processes (ssh tunnel, torrent seeder, ...
-getarg 'si.break=terminate-transfer' && logwarn "Break terminate-transfer" && interactive_shell
-terminate_transfer
 
 # Tells to dracut that root in now known.
 if [ -n "$DRACUT_SYSTEMD" ]; then

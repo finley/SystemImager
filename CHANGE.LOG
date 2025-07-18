@@ -11,7 +11,7 @@
 5.0.0 [ Not yet released ]
 --------------------------------------------------------------------------------
 - Linux distro supported: CentOS-6, CentOS-7, AlmaLinux-8, AlmaLinux-9,
-  Fedora-29, Open SuSE-15, debian-10, debian-11, debian-12
+  AlmaLinux-10, Fedora-29, Open SuSE-15, debian-10, debian-11, debian-12
 - Imager GUI based on Plymouth (text also available)
 - Web GUI for setup and replacement of si_monitortk (console and clients list)
   and netmootmgr
@@ -39,9 +39,7 @@
   - transfert
   - other
 - removed old bittorrent client and replaced it with distro supported components
-  - rtorrent for transfert
-  - opentracker for the tracker
-  - mktorrent to create torrent files
+  - transmission-cli and transmission-create
   - scripts for torrent info
 - Added many cmdline parameters including possibility to add breakpoints
   (si.break=<specific step>)

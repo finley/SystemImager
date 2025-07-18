@@ -385,6 +385,7 @@ install_server_bittorrent: install_bittorrent_man
 	$(SI_INSTALL) -d $(SBIN)
 	$(SI_INSTALL) -d $(ETC)/systemimager
 	$(SI_INSTALL) -m 644 --backup etc/bittorrent.conf $(ETC)/systemimager/
+	$(SI_INSTALL) -m 644 --backup etc/bittorrent.json $(ETC)/systemimager/
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_TARBALL_DIR)
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_TORRENT_DIR)
 	$(foreach binary, $(BT_SBINARIES), \

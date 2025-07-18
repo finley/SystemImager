@@ -5,24 +5,30 @@
 #
 #   $Id$
 #
-# SystemImager's BitTorrent daemons
+# SystemImager's BitTorrent daemons (transmission-daemon)
 # This daemon is needed to image clients using the
 # bittorrent protocol as transport.
 #
 # Do not modify this file. Instead, use systemd override.
 # Set modified entries in /etc/systemd/system/systemimager-server-bittorrent.service.d/<name>.conf
 #
-# TODO: Broken/Unfinished
-
 [Unit]
-ConditionPathExists=/etc/systemimager/bittorrent.conf
+ConditionPathExists=/etc/systemimager/bittorrent.json
 Description=SystemImager's BitTorrent daemons
-Requires=systemimager-server-bittorrent-tracker.service systemimager-server-bittorrent-seeder.service
+Conflicts=transmission-daemon.service
+After=network.target
 
 [Service]
 # EnvironmentFile for bittorrent daemons
-EnvironmentFile=/etc/systemimager/bittorrent.conf
 PIDFile=/var/run/systemimager-server-bittorrent.pid
+User=transmission
+Type=notify
+ExecStartPre=/usr/bin/mkdir -p /var/lib/systemimager/tmp
+ExecStartPre=/usr/bin/cp /etc/systemimager/bittorrent.json /var/lib/systemimager/tmp/settings.json
+ExecStartPre=/usr/bin/chown -R transmission /var/lib/systemimager/tarball /var/lib/systemimager/torrents /var/lib/systemimager/tmp
+ExecStart=/usr/bin/transmission-daemon -f -g /var/lib/systemimager/tmp --log-error
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/usr/bin/rm -rf /var/lib/systemimager/tmp/blocklists /var/lib/systemimager/tmp/resume /var/lib/systemimager/tmp/torrents /var/lib/systemimager/tmp/downloads
 
 [Install]
 WantedBy=multi-user.target
