@@ -63,7 +63,6 @@
 %define _dracutbase %(test -d /usr/lib/dracut && echo '/lib/dracut' || echo '/share/dracut')
 
 %define is_suse %(grep -E "(suse)" /etc/os-release > /dev/null 2>&1 && echo 1 || echo 0)
-#define is_suse %(test -f /etc/SuSE-release && echo 1 || echo 0)
 %define is_ppc64 %([ "`uname -m`" = "ppc64" ] && echo 1 || echo 0)
 %define is_ps3 %([ `grep PS3 /proc/cpuinfo >& /dev/null; echo $?` -eq 0 ] && echo 1 || echo 0) 
 
@@ -463,7 +462,7 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: %{name}-%{_arch}boot-%{_boot_flavor} = %{version}
-Obsoletes: %{name}-%{_arch}initrd_template = %{version}
+Obsoletes: %{name}-%{_arch}initrd_template
 AutoReqProv: no
 
 %description initrd_template
@@ -1177,6 +1176,10 @@ fi
 %attr(0755, root, root) %{_exec_prefix}/lib/systemimager/clients-statuses-helper
 
 %changelog
+* Fri Jul 18 2025 Olivier Lahaye <olivier.lahaye@cea.fr> 4.9.1-0.4
+- Add support for bittorent using transmission
+- Fix warnings in specfile
+
 * Wed Feb 15 2023 Olivier Lahaye <olivier.lahaye@cea.fr> 4.9.1-0.3
 - Add support for aarch64
 - Removed systemconfigurator dependancy
