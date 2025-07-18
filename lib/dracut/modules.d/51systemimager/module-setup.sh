@@ -244,7 +244,7 @@ install_plymouth_theme() {
 
     # Avoid DEBIAN Bug#997827 inst_libdir_file is buggy and forget to copy deps.
     # Friendly add missing files if any.
-    my_dracut_install $PLUGINDIR/{script,label}.so
+    my_dracut_install $PLUGINDIR/{script,label*}.so
     # End DEBIAN specific stuff
 
     inst /usr/share/plymouth/themes/text/text.plymouth $initdir
