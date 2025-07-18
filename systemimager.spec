@@ -933,7 +933,7 @@ fi
 
 %pre server-bittorrent
 echo "checking for a tracker binary..."
-BT_TRACKER_BIN=`(which bittorrent-tracker || which bttrack) 2>/dev/null`
+BT_TRACKER_BIN=`(which bittorrent-tracker || which bttrack || which opentracker) 2>/dev/null`
 if [ -z $BT_TRACKER_BIN ]; then
 	echo "WARNING: couldn't find a valid tracker binary!"
 	echo "--> Install the BitTorrent package (bittorrent for RH)."
@@ -943,7 +943,7 @@ else
 fi
 
 echo "checking for a maketorrent binary..."
-BT_MAKETORRENT_BIN=`(which maketorrent-console || which btmaketorrent) 2>/dev/null`
+BT_MAKETORRENT_BIN=`(which transmission-create || which maketorrent-console || which btmaketorrent) 2>/dev/null`
 if [ -z $BT_MAKETORRENT_BIN ]; then
 	echo "WARNING: couldn't find a valid maketorrent binary!"
 	echo "--> Install the BitTorrent package (bittorrent for RH)."
@@ -953,7 +953,7 @@ else
 fi
 
 echo "checking for a bittorrent binary..."
-BT_BITTORRENT_BIN=`(which launchmany-console || which btlaunchmany) 2>/dev/null`
+BT_BITTORRENT_BIN=`(which transmlission-cli || which launchmany-console || which btlaunchmany) 2>/dev/null`
 if [ -z $BT_BITTORRENT_BIN ]; then
 	echo "WARNING: couldn't find a valid bittorrent binary!"
 	echo "--> Install the BitTorrent package (bittorrent for RH)."
