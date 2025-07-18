@@ -393,7 +393,6 @@ install_server_bittorrent: install_bittorrent_man
 ifneq ($(wildcard $(SYSTEMD_OS_UNIT_DIR)),)
 	@echo "Installing systemd service files for bittorrent."
 	mkdir -p $(SYSTEMD_UNIT_DIR)
-	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent-seeder.service $(SYSTEMD_UNIT_DIR)
 	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent.service $(SYSTEMD_UNIT_DIR)
 	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent-tracker.service $(SYSTEMD_UNIT_DIR)
 else
