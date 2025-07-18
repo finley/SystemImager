@@ -20,15 +20,16 @@ After=network.target
 
 [Service]
 # EnvironmentFile for bittorrent daemons
-PIDFile=/var/run/systemimager-server-bittorrent.pid
+PIDFile=/run/systemimager-server-bittorrent.pid
 User=transmission
 Type=notify
-ExecStartPre=/usr/bin/mkdir -p /var/lib/systemimager/tmp
-ExecStartPre=/usr/bin/cp /etc/systemimager/bittorrent.json /var/lib/systemimager/tmp/settings.json
-ExecStartPre=/usr/bin/chown -R transmission /var/lib/systemimager/tarball /var/lib/systemimager/torrents /var/lib/systemimager/tmp
+#PermissionsStartOnly=true
+ExecStartPre=+/usr/bin/mkdir -p /var/lib/systemimager/tmp
+ExecStartPre=+/usr/bin/cp /etc/systemimager/bittorrent.json /var/lib/systemimager/tmp/settings.json
+ExecStartPre=+/usr/bin/chown -R transmission /var/lib/systemimager/tarballs /var/lib/systemimager/torrents /var/lib/systemimager/tmp
 ExecStart=/usr/bin/transmission-daemon -f -g /var/lib/systemimager/tmp --log-error
-ExecReload=/bin/kill -s HUP $MAINPID
-ExecStop=/usr/bin/rm -rf /var/lib/systemimager/tmp/blocklists /var/lib/systemimager/tmp/resume /var/lib/systemimager/tmp/torrents /var/lib/systemimager/tmp/downloads
+ExecReload=/usr/bin/kill -s HUP $MAINPID
+ExecStop=+/usr/bin/rm -rf /var/lib/systemimager/tmp
 
 [Install]
 WantedBy=multi-user.target
