@@ -1105,7 +1105,6 @@ fi
 %config %{_sysconfdir}/systemimager/bittorrent.json
 %if 0%{?_unitdir:1}
 %{_unitdir}/systemimager-server-bittorrent.service
-%{_unitdir}/systemimager-server-bittorrent-seeder.service
 %{_unitdir}/systemimager-server-bittorrent-tracker.service
 %else
 %{_sysconfdir}/init.d/systemimager-server-bittorrent

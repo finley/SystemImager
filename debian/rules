@@ -211,15 +211,13 @@ binary-indep: build-indep install-indep
 		cp ./etc/systemd/system/$(PKG)-server-netbootmond.service ./debian/$(PKG)-server.$(PKG)-server-netbootmond.service ;\
 		cp ./etc/systemd/system/$(PKG)-server-flamethrowerd.service ./debian/$(PKG)-server-flamethrower.$(PKG)-server-flamethrowerd.service ;\
 		cp ./etc/systemd/system/$(PKG)-server-bittorrent.service ./debian/$(PKG)-server-bittorrent.$(PKG)-server-bittorrent.service ;\
-		cp ./etc/systemd/system/$(PKG)-server-bittorrent.service ./debian/$(PKG)-server-bittorrent.$(PKG)-server-bittorrent-seeder.service ;\
-		cp ./etc/systemd/system/$(PKG)-server-bittorrent.service ./debian/$(PKG)-server-bittorrent.$(PKG)-server-bittorrent-tracker.service ;\
+		cp ./etc/systemd/system/$(PKG)-server-bittorrent-tracker.service ./debian/$(PKG)-server-bittorrent.$(PKG)-server-bittorrent-tracker.service ;\
 		dh_installsystemd --no-start -p$(PKG)-server --name=$(PKG)-server-rsyncd@ ;\
 		dh_installsystemd --no-start -p$(PKG)-server --name=$(PKG)-server-rsyncd ;\
 		dh_installsystemd --no-start -p$(PKG)-server --name=$(PKG)-server-netbootmond ;\
 		dh_installsystemd --no-start -p$(PKG)-server --name=$(PKG)-server-monitord ;\
 		dh_installsystemd --no-start -p$(PKG)-server-flamethrower --name=$(PKG)-server-flamethrowerd ;\
 		dh_installsystemd --no-start -p$(PKG)-server-bittorrent --name=$(PKG)-server-bittorrent ;\
-		dh_installsystemd --no-start -p$(PKG)-server-bittorrent --name=$(PKG)-server-bittorrent-seeder ;\
 		dh_installsystemd --no-start -p$(PKG)-server-bittorrent --name=$(PKG)-server-bittorrent-tracker ;\
 	else \
 		ls ./etc/init.d/* |sed -E 'p;s|.*/(.*)|./debian/\1.init|' |xargs -n2 cp ;\
