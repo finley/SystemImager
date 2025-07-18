@@ -114,7 +114,7 @@ EOF
     inst_multiple -o find strace sysctl vi clear reset lsof fuser pidof
 
     # bittorent client needed when using bittorrent deployment method.
-    inst_multiple rtorrent
+    inst_multiple transmission-cli
 
     # udpcast client require for flamethrower deployment method
     inst_multiple udp-receiver
