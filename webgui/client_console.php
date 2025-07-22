@@ -223,7 +223,7 @@ function UpdateLogHandler(event) {
 // https://stackoverflow.com/questions/58014912/how-can-scroll-down-a-tbody-table-when-innerhtml-is-updated-with-new-lines
 //  lastRow=logTable_elm.rows[ logTable_elm.rows.length - 1];
 
-   ComputeAutoScrollRequirements();
+  ComputeAutoScrollRequirements();
 
 
   serverData_elm.innerHTML += logLine;
