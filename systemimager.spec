@@ -115,7 +115,7 @@
 %define pkg_mkisofs genisoimage
 %define pkg_ncat nmap-ncat
 %define pkg_pidof procps-ng
-%define pkg_dhcpd dhcp-server
+%define pkg_dhcpd kea
 %define pkg_transmission_cli transmission-cli
 %define pkg_transmission_daemon transmission-daemon
 %define web_vhosts_dir %{_sysconfdir}/httpd/conf.d
@@ -130,7 +130,7 @@
 %define pkg_mkisofs mkisofs
 %define pkg_ncat nmap-ncat
 %define pkg_pidof procps-ng
-%define pkg_dhcpd dhcp-server
+%define pkg_dhcpd kea
 %define pkg_transmission_cli transmission-cli
 %define pkg_transmission_daemon transmission-daemon
 %define web_vhosts_dir %{_sysconfdir}/httpd/conf.d
