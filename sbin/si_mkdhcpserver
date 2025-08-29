@@ -1644,4 +1644,134 @@ B<Problèmes résolus dans la version 0.8.1> :
 
 kea-dhcp4(8), kea-ctrl-agent(8), systemimager(1)
 
+=item B<--ssh-download-url> [<url>]
+
+URL pour le téléchargement SSH des images. Si spécifié sans argument, utilise C<ssh://<image-server>/var/lib/systemimager/images>. Ajoute une option DHCP personnalisée (code 203).
+
+=item B<--flamethrower-port-base> [<port>]
+
+Port de base pour Flamethrower. Si spécifié sans argument, utilise 8000. Ajoute une option DHCP personnalisée (code 204).
+
+=item B<--staging-dir> <path>
+
+Répertoire temporaire pour le staging. Ajoute une option DHCP personnalisée (code 205).
+
+=item B<--add-client> <nom> <MAC> <IP> [--global]
+
+Ajoute une réservation pour un client avec le nom d'hôte, l'adresse MAC, et l'adresse IP spécifiés. Le script vérifie que :
+- Le nom d'hôte est valide (caractères alphanumériques, points, tirets, sans commencer/finir par un point ou tiret).
+- L'adresse MAC est au format C<XX:XX:XX:XX:XX:XX> (hexadécimal).
+- L'adresse IP est valide (IPv4).
+- Le nom, la MAC, et l'IP sont uniques dans toute la configuration (sous-réseaux et réservations globales).
+- Sans l'option C<--global>, l'IP doit appartenir à un sous-réseau défini dans la configuration.
+
+Si l'IP correspond à un sous-réseau et que C<--global> n'est pas utilisé, la réservation est placée dans ce sous-réseau. Sinon, avec C<--global>, la réservation est ajoutée globalement sous C<"Dhcp4" -> "reservations">. Un commentaire est ajouté avec la date et l'emplacement de la réservation.
+
+=item B<--del-client> <nom|MAC|IP>
+
+Supprime les réservations correspondant au critère spécifié (nom d'hôte, adresse MAC, ou adresse IP). Supporte les wildcards (par exemple, C<client*>). Supprime les réservations dans les sous-réseaux et globalement.
+
+=item B<--list-clients> [--csv]
+
+Liste les réservations avec les colonnes : subnet, subnet-id, net-interface, fqdn, MAC, IP. Format pretty print (tableau) par défaut ou CSV avec C<--csv>. La colonne C<net-interface> affiche l'interface réseau correspondant au sous-réseau (détectée via C<ip -4 addr show>) ou "N/A" si aucune interface ne correspond. Les réservations globales affichent "global" dans la colonne subnet et "N/A" pour subnet-id et net-interface.
+
+=item B<--list-pools> [--csv]
+
+Liste les pools avec les colonnes : subnet, subnet-id, net-interface, pool-start, pool-end. Format pretty print (tableau) par défaut ou CSV avec C<--csv>. La colonne net-interface affiche l'interface réseau correspondant au sous-réseau ou "N/A" si aucune interface ne correspond.
+
+=item B<--list-subnets> [--csv]
+
+Liste les sous-réseaux avec les colonnes : subnet, subnet-id, ip-min, ip-max. Format pretty print (tableau) par défaut ou CSV avec C<--csv>. Les colonnes ip-min et ip-max indiquent respectivement l'adresse réseau et l'adresse de broadcast du sous-réseau, calculées à partir de l'adresse IP et du masque.
+
+=item B<--debug>
+
+Active les messages de débogage, affichant des informations détaillées sur le parsing du fichier de configuration, la détection des interfaces réseau, la gestion des commentaires, et les décisions prises par le script.
+
+=item B<--help>
+
+Affiche l'aide et termine le script.
+
+=back
+
+=head1 NOTES
+
+- Les interfaces réseau sont détectées automatiquement via la commande C<ip -4 addr show> pour associer chaque sous-réseau à une interface locale. Si aucune interface ne correspond à un sous-réseau (par exemple, si l'adresse IP du sous-réseau n'est pas configurée localement), la colonne C<net-interface> affiche "N/A" dans les sorties C<--list-clients>, C<--list-pools>, et C<--list-subnets>.
+- Les réservations ajoutées via C<--add-client <nom> <MAC> <IP>> sont placées automatiquement dans le sous-réseau correspondant à l'adresse IP fournie, en vérifiant si l'IP appartient à un sous-réseau défini dans C<$config->{"Dhcp4"}->{"subnet4"}>. Si aucun sous-réseau ne correspond, une erreur est signalée, sauf si l'option C<--global> est spécifiée, auquel cas la réservation est ajoutée dans C<"Dhcp4" -> "reservations">. Le nom d'hôte, l'adresse MAC, et l'adresse IP doivent être B<uniques dans l'ensemble de la configuration> (sous-réseaux et réservations globales). Le nom d'hôte doit être valide (caractères alphanumériques, points, et tirets, sans commencer ni finir par un point ou tiret). L'adresse MAC doit être au format C<XX:XX:XX:XX:XX:XX> (hexadécimal). L'adresse IP doit être valide et, sans C<--global>, appartenir à un sous-réseau défini.
+- Les options C<--list-clients>, C<--list-pools>, et C<--list-subnets> affichent respectivement les réservations, les pools, et les sous-réseaux présents dans la configuration. Par défaut, elles utilisent un format "pretty print" (tableau clair généré avec le module Perl C<Text::Table>). Avec l'option C<--csv>, la sortie est au format CSV avec les colonnes suivantes :
+  - C<--list-clients> : subnet, subnet-id, net-interface, fqdn, MAC, IP
+  - C<--list-pools> : subnet, subnet-id, net-interface, pool-start, pool-end
+  - C<--list-subnets> : subnet, subnet-id, ip-min, ip-max
+  Ces options ne modifient pas le fichier de configuration sauf si des options de modification (comme C<--add-network>, C<--del-network>, C<--add-client>, ou C<--del-client>) sont également présentes. Dans ce cas, les modifications sont appliquées en dernier, et les listes affichées reflètent l'état final de la configuration après ces modifications. Par exemple, lister les clients après avoir ajouté une réservation montrera la nouvelle réservation dans le sous-réseau approprié.
+- Les commentaires dans le fichier de configuration sont préservés pour les sous-réseaux, les pools, et les réservations. Les nouveaux sous-réseaux, pools, ou réservations ajoutés par le script incluent un commentaire indiquant la date et l'heure de l'ajout (par exemple, "Subnet-1 192.168.1.0/24 added on [date]" ou "Reservation for client1 in subnet 192.168.1.0/24 added on [date]"). Les réservations globales ont un commentaire du type "Global reservation for client1 (MAC, IP) added on [date]". Les commentaires existants non associés à une entrée spécifique (sous-réseau, pool, ou réservation) peuvent être perdus lors de la réécriture du fichier.
+- Le script vérifie la validité des adresses IP (format C<xxx.xxx.xxx.xxx>), des masques de sous-réseau (0 à 32), des adresses MAC (format hexadécimal), et des FQDN (noms de domaine valides). Les erreurs sont signalées avec des messages clairs, et le script s'arrête si une erreur critique est détectée (par exemple, IP invalide, conflit de pool, fichier de configuration non accessible, ou doublon dans les réservations).
+- B<Unicité des réservations> : Le script vérifie désormais que chaque réservation (nom d'hôte, adresse MAC, ou adresse IP) est unique dans toute la configuration, y compris les réservations globales et celles dans les sous-réseaux. Une tentative d'ajouter une réservation avec un nom, une MAC, ou une IP déjà utilisée (que ce soit dans un sous-réseau ou globalement) entraîne une erreur indiquant l'emplacement du doublon (par exemple, "subnet 192.168.1.0/24" ou "global").
+- B<Gestion des erreurs de parsing> : Les pools ou réservations trouvés hors d'un contexte de sous-réseau valide dans le fichier JSON sont ignorés pour éviter des erreurs comme "Use of uninitialized value $current_subnet". Des messages de débogage sont affichés en mode C<--debug> pour signaler ces cas.
+- Le fichier de configuration généré est écrit dans F</etc/kea/kea-dhcp4.conf>. Le répertoire F</etc/kea> doit exister et être accessible en écriture si le fichier n'existe pas encore. Si des modifications sont demandées, le script vérifie que le fichier est accessible en écriture avant de procéder.
+- Si aucune modification n'est demandée (par exemple, C<--add-network>, C<--del-network>, C<--add-client>, ou C<--del-client>) et qu'aucun sous-réseau n'existe après traitement (par exemple, après suppression de tous les sous-réseaux), le script s'arrête avec une erreur, sauf si une option de listage (C<--list-*>) est utilisée, auquel cas il affiche les informations demandées et sort sans erreur.
+- Le mode débogage (C<--debug>) affiche des informations détaillées sur le processus de parsing du fichier de configuration, la détection des interfaces réseau, la gestion des commentaires, et les décisions prises par le script, y compris la correspondance des adresses IP avec les sous-réseaux pour les réservations.
+- Les réservations globales (définies directement sous C<"Dhcp4" -> "reservations">) sont supportées et affichées dans C<--list-clients> avec "global" dans la colonne subnet et "N/A" pour subnet-id et net-interface. Les réservations dans les sous-réseaux sont associées à leur sous-réseau respectif, avec l'interface réseau correspondante ou "N/A".
+- Les options C<--list-subnets> calculent C<ip-min> (adresse réseau) et C<ip-max> (adresse de broadcast) pour chaque sous-réseau en fonction de l'adresse IP et du masque, en utilisant la fonction C<get_subnet_ip_range>.
+
+=head1 EXIT STATUS
+
+=over 4
+
+=item B<0> Succès, y compris pour les options de listage (C<--list-*>) même si aucune donnée n'est trouvée.
+
+=item B<1> Erreur, par exemple : fichier de configuration non accessible, paramètres invalides, conflits dans les pools ou réservations, ou absence de sous-réseaux sans modification demandée.
+
+=back
+
+=head1 DEPENDENCIES
+
+Modules Perl nécessaires :
+- C<Getopt::Long>
+- C<Socket>
+- C<IO::Socket::INET>
+- C<JSON::PP>
+- C<File::Spec>
+- C<Text::Table> (pour les sorties en format tableau)
+
+Commandes externes :
+- C<ip> (pour C<ip -4 addr show> afin de détecter les interfaces réseau)
+- C<kea-dhcp4> (avertissement si non installé, mais non requis pour générer la configuration)
+
+=head1 FILES
+
+=over 4
+
+=item F</etc/kea/kea-dhcp4.conf>
+
+Fichier de configuration généré pour Kea DHCPv4.
+
+=item F</var/lib/kea/dhcp4.leases>
+
+Fichier de leases utilisé par Kea DHCPv4 (spécifié dans la configuration).
+
+=item F</etc/resolv.conf>
+
+Utilisé pour extraire le domaine DNS par défaut si C<--dns-domain> n'est pas spécifié.
+
+=back
+
+=head1 BUGS
+
+Signalez les bugs à l'équipe SystemImager ou ouvrez une issue sur le dépôt du projet. Problèmes connus :
+- Les commentaires non associés à un sous-réseau, un pool, ou une réservation (par exemple, commentaires flottants dans le fichier JSON) peuvent être perdus lors de la réécriture du fichier.
+- Les sous-réseaux mal formés dans la configuration existante (par exemple, format IP/masque incorrect) sont ignorés pour éviter les erreurs, ce qui peut entraîner une perte de données si la configuration manuelle est incorrecte.
+- Les interfaces réseau sont détectées en fonction des adresses IP locales via C<ip -4 addr show>. Si aucune interface ne correspond à un sous-réseau, la colonne C<net-interface> affiche "N/A", ce qui peut nécessiter une vérification manuelle si une interface est attendue.
+
+B<Problèmes résolus dans la version 0.8.1> :
+- Une erreur potentielle de type "Use of uninitialized value $current_subnet" lors du parsing du fichier JSON a été corrigée en ignorant les pools ou réservations hors contexte de sous-réseau et en ajoutant des vérifications explicites pour C<$current_subnet>.
+- Les réservations ne sont plus autorisées à être dupliquées entre les sous-réseaux et les réservations globales. Le script vérifie désormais l'unicité du nom d'hôte, de l'adresse MAC, et de l'adresse IP dans toute la configuration avant d'ajouter une nouvelle réservation.
+
+=head1 AUTHOR
+
+Équipe SystemImager
+
+=head1 SEE ALSO
+
+kea-dhcp4(8), kea-ctrl-agent(8), systemimager(1)
+
 =cut
+
