@@ -31,7 +31,17 @@
 			<type>ipv4-address</type>
 		</option>
 		<option>
+			<code>200</code>
+			<name>image_server</name>
+			<type>ipv4-address</type>
+		</option>
+		<option>
 			<code>141</code>
+			<name>log_server_port</name>
+			<type>uint16</type>
+		</option>
+		<option>
+			<code>201</code>
 			<name>log_server_port</name>
 			<type>uint16</type>
 		</option>
@@ -41,12 +51,27 @@
 			<type>string</type>
 		</option>
 		<option>
+			<code>202</code>
+			<name>ssh_download_url</name>
+			<type>string</type>
+		</option>
+		<option>
 			<code>143</code>
 			<name>flamethrower_directory_portbase</name>
 			<type>uint16</type>
 		</option>
 		<option>
+			<code>203</code>
+			<name>flamethrower_directory_portbase</name>
+			<type>uint16</type>
+		</option>
+		<option>
 			<code>144</code>
+			<name>tmpfs_staging</name>
+			<type>string</type>
+		</option>
+		<option>
+			<code>204</code>
 			<name>tmpfs_staging</name>
 			<type>string</type>
 		</option>

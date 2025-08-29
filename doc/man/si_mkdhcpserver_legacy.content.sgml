@@ -13,12 +13,12 @@
     &dhdate;
   </refentryinfo>
   <refmeta>
-    <refentrytitle>SI_MKDHCPSERVER</refentrytitle>
+    <refentrytitle>SI_MKDHCPSERVER_LEGACY</refentrytitle>
 
     &dhsection;
   </refmeta>
   <refnamediv>
-    <refname>si_mkdhcpserver</refname>
+    <refname>si_mkdhcpserver_legacy</refname>
 
     <refpurpose>
       create a DHCP server configuration file for use with SystemImager
@@ -26,24 +26,24 @@
   </refnamediv>
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>si_mkdhcpserver</command>
+      <command>si_mkdhcpserver_legacy</command>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1>
     <title>DESCRIPTION</title>
 
     <para>This manual page documents briefly the
-      <command>si_mkdhcpserver</command> command.</para>
+      <command>si_mkdhcpserver_legacy</command> command.</para>
 
     <para>
-      <command>si_mkdhcpserver</command> is an interactive utility for creating
+      <command>si_mkdhcpserver_legacy</command> is an interactive utility for creating
       a dhcpd configuration file for use with SystemImager.  It generates
       entries commonly needed in PXE configurations, and defines option-100.
       option-100 is passed to autoinstall clients in order to direct them to
       the image server they should use.
     </para>
     <para>
-     The PXE configuration that si_mkdhcpserver creates will work for most
+     The PXE configuration that si_mkdhcpserver_legacy creates will work for most
      i386 clients, but will not work for machines of other architectures.
      Please see the SystemImager manual for instructions on configuring
      network boot for other supported architectures.
@@ -54,7 +54,7 @@
     <title>OPTIONS</title>
 
     <para>
-      <command>si_mkdhcpserver</command> currently accepts no options.
+      <command>si_mkdhcpserver_legacy</command> currently accepts no options.
     </para>
 
   </refsect1>

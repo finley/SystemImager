@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 #
 #    vi:set filetype=perl:
 #
@@ -17,604 +17,1631 @@
 #    You should have received a copy of the GNU General Public License
 #    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
 #
-#    Copyright (C) 1999-2019 Brian Elliott Finley <brian@thefinleys.com>
-#    Copyright (C) 2002-2003 Bald Guy Software
+#    Copyright (C) 2025 Olivier Lahaye <olivier.lahaye1@free.fr>
 #
 #    Others who have contributed to this code (in alphabetical order):
-#     John Goebel <jgoebel@valinux.com>
-#     Curtis Zinzilieta <czinzilieta@valinux.com>
-#     Olivier Lahaye <olivier.lahaye@cea.fr>
+#     Grok 3 <https://grok.com>
 #
 #    See http://www.iana.org/assignments/bootp-dhcp-parameters for info on
 #    custom option numbers.
 #
- 
+#    Purpose of this command: create, update or query kde-dhcp4 dhcp server
+#                             configuration file for SystemImager server
+#                             with support for specific DHCP options
+#
+#    NOTES: This script is specific to new ISC kea-dhcp4 server.
+#           If you still use legacy isc-dhcpd, use si_mkdhcpserver_legacy
+#
+#           Old options numbers have been shifted to new ids starting at 200
+#           to avoid conflicts.
+#
+#           Old ID | New ID | Content
+#           140    | 200    | Image server (ip-address or fqdn)
+#           N/A    | 199    | Log Server (ip-address or fqdn)
+#           141    | 201    | Log Server Port (uint-16)
+#           142    | 202    | SSH Download URL (string)
+#           143    | 203    | Flamethrower port base (uint-16)
+#           144    | 204    | tmpfs staging dir (string)
+
 use strict;
-use SystemImager::Common;
-use SystemImager::HostRange;
-use vars qw($VERSION);
+use warnings;
+use Getopt::Long;
+use Socket;
+use IO::Socket::INET;
+use JSON::PP;
+use File::Spec;
+use Text::Table;  # Pour le pretty print des tableaux
 
-# set some variables
-$VERSION="SYSTEMIMAGER_VERSION_STRING";
-my $program_name="si_mkdhcpserver";
-my $get_help = "  Try \"$program_name -help\" for more options.";
+# Variables pour stocker les options
+my $dns_domain;
+my @dns_servers;
+my @add_networks;        # Liste de réseaux : [ [ip/mask, ip_debut, ip_fin], ... ]
+my @del_networks;        # Liste de réseaux à supprimer : [ ip/mask, force ]
+my $image_server;
+my $boot_server;
+my $log_server;          # Adresse du serveur de logs
+my $log_server_port;     # Port du serveur de logs
+my $ssh_download_url;    # Pas de valeur par défaut
+my $flamethrower_port_base;  # Pas de valeur par défaut, 8000 si spécifié sans argument
+my $staging_dir;         # Pas de valeur par défaut
+my $help;
+my @add_clients;         # Liste de triplets [nom, MAC, IP]
+my $global;              # Option --global pour --add-client
+my @del_clients;         # Liste de critères pour suppression
+my $debug;               # Option --debug pour activer les messages de débogage
+my $list_clients;        # Option --list-clients
+my $list_pools;          # Option --list-pools
+my $list_subnets;        # Option --list-subnets
+my $csv;                 # Option --csv pour les sorties --list-*
 
+# Parsing des options
+GetOptions(
+    'dns-domain=s' => \$dns_domain,
+    'dns-servers=s' => \@dns_servers,
+    'add-network=s{1,3}' => \@add_networks,  # Ajout ou mise à jour de réseaux
+    'del-network=s{1,2}' => \@del_networks,  # Suppression de réseaux
+    'image-server=s' => \$image_server,
+    'boot-server=s' => \$boot_server,
+    'log-server=s' => \$log_server,
+    'log-server-port=i' => \$log_server_port,
+    'ssh-download-url:s' => \$ssh_download_url,
+    'flamethrower-port-base:i' => \$flamethrower_port_base,
+    'staging-dir=s' => \$staging_dir,
+    'add-client=s{3}' => \@add_clients,
+    'global' => \$global,                    # Option pour forcer une réservation globale
+    'del-client=s' => \@del_clients,
+    'list-clients' => \$list_clients,
+    'list-pools' => \$list_pools,
+    'list-subnets' => \$list_subnets,
+    'csv' => \$csv,
+    'debug' => \$debug,
+    'help' => \$help
+) or die "Erreur dans les options de la ligne de commande\n";
 
-my $version_info = <<"EOF";
-$program_name (part of SystemImager) version $VERSION
-
-Copyright (C) 2019 Brian Elliott Finley <brian\@thefinleys.com>
-This is free software; see the source for copying conditions.  There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-EOF
-
-# set help information
-my $help_info = $version_info . <<"EOF";
-
-Usage: $program_name
-
-Download, report bugs, and make suggestions at:
-http://systemimager.org/
-EOF
-
-SystemImager::Common->check_if_root();
-
-
-
-### BEGIN variable for parts of the dhcpd.conf file ###
-my $header = <<'EOF';
-#
-# "SystemImager" 
-#
-#  Copyright (C) 1999-2019 Brian Elliott Finley <brian@thefinleys.com>
-#  Copyright (C) 2002 Bald Guy Software
-#
-#  This file was created with "si_mkdhcpserver", which is part of SystemImager.
-#  See http://systemimager.org/ for more information.
-#
-EOF
-
-
-# associated configs for the dhcpd.conf file
-my $dhcpd_conf_v3_part1 = <<"EOF";
-# This is an ISC DHCP v3 configuration file.
-
-# general options
-authoritative;
-ddns-update-style none;
-
-EOF
-
-
-my $dhcpd_conf_v3_part2 = <<"EOF";
-
-# set lease time to infinite (-1)
-default-lease-time -1;
-
-# Uncomment one of the two following lines.  The first, if you need to
-# boot i386 clients, or the second for booting ia64 clients.
-filename "pxelinux.bin";   # i386
-#filename "elilo.efi";   # ia64
-
-EOF
-
-#XXX include elilo.efi and elilo.conf in systemimager bundle.  Also include pxelinux.bin, methinks. -BEF-
-
-my $dhcpd_conf_v2_part1 = <<'EOF';
-# This is an ISC DHCP v2 configuration file.
-
-# set lease time to infinite (-1)
-default-lease-time -1;
-
-# Uncomment one of the two following lines.  The first, if you need to
-# boot i386 clients, or the second for booting ia64 clients.
-filename "pxelinux.bin";   # i386
-#filename "elilo.efi";   # ia64
-
-EOF
-
-### END variables for parts of dhcpd.conf file ###
-
-
-
-# if not run as root, this script will surely fail
-unless($< == 0) { die "Must be run as root!\n"; }
-
-system("clear");
-
-# give warning
-print <<"EOF";
-Welcome to the SystemImager "si_mkdhcpserver" command.  This command will
-prepare this computer to be a DHCP server by creating a dhcpd.conf file
-for use with your ISC DHCP server (v2 or v3).
-
-If there is an existing file, it will be backed up with the 
-.beforesystemimager extension.
-
-EOF
-
-print "Continue? (y/[n]): ";
-my $continue=<STDIN>;
-chomp $continue;
-($continue eq "y") or die "\n$program_name No files were modified.\n";
-
-
-# set some default values
-my $dhcpd_conf = "/etc/dhcp/dhcpd.conf";
-my $dhcpd_version = "0";
-print "Trying to probe your DNS domain. Please wait...";
-my $dnsdomainname = `dnsdomainname`;
-chomp $dnsdomainname;
-my $netnumber = "192.168.1.0";
-my $netmask = "";
-my $rangebegin = "";
-my $rangeend = "";
-my $dnsserver1 = "";
-my $dnsserver2 = "";
-my $dnsserver3 = "";
-my $log_server = "";
-my $log_server_port = "";
-my $router = "";
-my $imageserver = "";
-my $boot_server = "";
-my $ssh_download_url = "";
-my $flamethrower_directory_portbase = "";
-my $tmpfs_staging = "n";
-my $mcast_install = "n";
-my $swallow = "";
-
-# Oh where oh where could my dhcpd.conf file be?
-my @dhcpd_conf_file_locations_du_jour = ( 
-    "/etc/dhcp/dhcpd.conf",
-    "/etc/dhcp3/dhcpd.conf",
-    "/etc/dhcpd.conf"
-);
-foreach my $file (@dhcpd_conf_file_locations_du_jour) {
-    # does *this* one exist?
-    if( -e $file ) { 
-        $dhcpd_conf = $file;
-        last;
-    }
-}
-#
-# Find dhcpd version
-if( -x '/usr/sbin/dhcpd' ) {
-    my $dhcpd_version=`/usr/sbin/dhcpd --version 2>&1`;
-    my @dhcp_major= $dhcpd_version =~ /(\d+)/ ;
-    $dhcpd_version = $dhcp_major[0];
-} else {
-    print "Can't run '/usr/sbin/dhcpd -v' to check dhcp server version. Assuming v3."
+# Affichage de l'aide si demandée
+if ($help) {
+    print_usage();
+    exit 0;
 }
 
-### Begin questionnaire ###
-my $satisfied = "n";
-while ($satisfied ne "y") {
- system("clear");
- print << "EOF";
-Type your response or hit <Enter> to accept [defaults].  If you don't
-have a response, such as no first or second DNS server, just hit 
-<Enter> and none will be used.
+# Vérifier si des options de modification sont présentes
+my $has_modifications = @add_networks || @del_networks || @add_clients || @del_clients;
 
-EOF
-
-    # Query for dhcpd version only if we were unable to determine installed version.
-    if ( "$dhcpd_version" eq "0" ) {
-        $dhcpd_version = 3; # defaults to 3
-        print "What is your DHCP daemon major version number (2 or 3)? [$dhcpd_version]: ";
-        $dhcpd_version = get_response($dhcpd_version);
-    }
-
-    print "What is the name of your DHCP daemon config file? [$dhcpd_conf]: ";
-    $dhcpd_conf = get_response($dhcpd_conf);
-   
-    print "What is your domain name? [$dnsdomainname]: ";
-    $dnsdomainname = get_response($dnsdomainname);
-   
-    print "What is your network number? [$netnumber]: ";
-    $netnumber = get_response($netnumber);
-    my $hex_netnumber = hex(SystemImager::HostRange::ip2hex($netnumber));
-
-    # Propose a valid netmask.
-    if ($hex_netnumber < hex(SystemImager::HostRange::ip2hex('128.0.0.0'))) {
-        # Class A #
-        $netmask = '255.0.0.0';
-    } elsif ($hex_netnumber < hex(SystemImager::HostRange::ip2hex('192.0.0.0'))) {
-        # Class B #
-        $netmask = '255.255.0.0';
-    } elsif ($hex_netnumber < hex(SystemImager::HostRange::ip2hex('224.0.0.0'))) {
-        # Class C #
-        $netmask = '255.255.255.0';
+# Vérifier si le fichier de configuration est accessible en écriture si des modifications sont demandées
+my $config_file = '/etc/kea/kea-dhcp4.conf';
+my $config_dir = File::Spec->catdir('/etc', 'kea');
+if ($has_modifications) {
+    if (-e $config_file) {
+        die "Erreur: Impossible d'écrire dans $config_file : fichier non accessible en écriture\n" unless -w $config_file;
     } else {
-        # Class E and invalid => propose a class C netmask.
-        $netmask = '255.255.255.0';
+        die "Erreur: Répertoire $config_dir n'existe pas ou n'est pas accessible en écriture\n" unless -d $config_dir && -w $config_dir;
     }
-
-    print "What is your netmask? [$netmask]: ";
-    $netmask = get_response($netmask);
-    my $hex_netmask = hex(SystemImager::HostRange::ip2hex($netmask));
-
-    # Try to auto-detect host min and host max.
-    $rangebegin = SystemImager::HostRange::hex2ip(
-                      sprintf("%08X", (($hex_netnumber & $hex_netmask) + 1))
-                  );
-    $router =
-    $imageserver = 
-    $boot_server = 
-    $rangeend = SystemImager::HostRange::hex2ip(
-                    sprintf("%08X",
-                        (($hex_netnumber & $hex_netmask) |
-			 (~$hex_netmask) & 0xffffffff) - 1
-                    )
-                );
-   
-    print "What is the starting IP address for your dhcp range? [$rangebegin]: ";
-    $rangebegin = get_response($rangebegin);
-   
-    print "What is the ending IP address for your dhcp range? [$rangeend]: ";
-    $rangeend = get_response($rangeend);
-   
-    print "What is the IP address of your first DNS server? [$dnsserver1]: ";
-    $dnsserver1 = get_response($dnsserver1);
-   
-    if ($dnsserver1) {
-      print "What is the IP address of your second DNS server? [$dnsserver2]: ";
-      $dnsserver2 = get_response($dnsserver2);
-    }
-   
-    if ($dnsserver2) {
-      print "What is the IP address of your third DNS server? [$dnsserver3]: ";
-      $dnsserver3=get_response($dnsserver3);
-    }
-   
-    print "What is the IP address of your default gateway? [$router]: ";
-    $router=get_response($router);
-   
-    print "What is the IP address of your image server? [$imageserver]: ";
-    $imageserver=get_response($imageserver);
-   
-    print "What is the IP address of your boot server? [$boot_server]: ";
-    $boot_server = get_response($boot_server);
-   
-    print "What is the IP address of your log server? [$log_server]: ";
-    $log_server = get_response($log_server);
-   
-    if($log_server) {
-        print "If your log server uses a non-standard port, enter it here: [$log_server_port]: ";
-        $log_server_port = get_response($log_server_port);
-    }
-   
-    print qq/Use tmpfs staging on client?  (If unsure, choose "n") [$tmpfs_staging]: /;
-    $tmpfs_staging = get_response($tmpfs_staging);
-    $tmpfs_staging = lc $tmpfs_staging;
-    if("$tmpfs_staging" eq "y") {
-        $tmpfs_staging = "yes";
-    }
-   
-    print "Do you want to use Flamethrower (multicast) to install your clients? [$mcast_install]: ";
-    $mcast_install = get_response($mcast_install);
-    if ($mcast_install eq "y") {
-        if ($flamethrower_directory_portbase eq "") { $flamethrower_directory_portbase="9000"; }
-        print "On which port is your Flamethrower directory? [$flamethrower_directory_portbase]: ";
-        $flamethrower_directory_portbase = get_response($flamethrower_directory_portbase);
-    }
-   
-    # see http://www.armory.com/swallowscenes.html for details
-    print "\nWhat... is the air-speed velocity of an unladen swallow? [$swallow]: ";
-    $swallow=<STDIN>;
-    system("clear");
-    chomp $swallow;
-    $swallow = lc $swallow;
-    if($swallow =~ /african/) {
-     print "Aaaaaaaaaaaaaaaaaaaaaaaaaaaah!\n";
-    } else {
-     print "Wrong!!! (with a Monty Python(TM) accent...)\n";
-    }
-    print "\nPress <Enter> to continue...";
-    <STDIN>;
-   
-    system("clear");
-    print "Ahh, but seriously folks...\n";
-    print "Here are the values you have chosen:\n\n";
-    print "#######################################################################\n";
-    print "ISC DHCP daemon version:                  $dhcpd_version\n";
-    print "ISC DHCP daemon config file:              $dhcpd_conf\n";
-    print "DNS domain name:                          $dnsdomainname\n";
-    print "Network number:                           $netnumber\n";
-    print "Netmask:                                  $netmask\n";
-    print "Starting IP address for your DHCP range:  $rangebegin\n";
-    print "Ending IP address for your DHCP range:    $rangeend\n";
-    print "First DNS server:                         $dnsserver1\n";
-    print "Second DNS server:                        $dnsserver2\n";
-    print "Third DNS server:                         $dnsserver3\n";
-    print "Default gateway:                          $router\n";
-    print "Image server:                             $imageserver\n";
-    print "Boot server:                              $boot_server\n";
-    print "Log server:                               $log_server\n";
-    print "Log server port:                          $log_server_port\n";
-    print "Flamethrower directory port:              $flamethrower_directory_portbase\n";
-    print "Use tmpfs staging on client:              $tmpfs_staging\n";
-    print "SSH files download URL:                   $ssh_download_url\n";
-    print "#######################################################################\n";
-    
-    print "\nAre you satisfied? (y/[n]): ";
-    $satisfied=<STDIN>;
-    chomp $satisfied;
 }
 
-### End questionnaire ###
-
-
-# backup dhcpd.conf if necessary
-if( -e "$dhcpd_conf" && ! -e "${dhcpd_conf}.beforesystemimager") { 
- rename("$dhcpd_conf", "${dhcpd_conf}.beforesystemimager");
+# Vérifier si kea-dhcp4 est installé (avertissement non bloquant)
+if (system("which kea-dhcp4 >/dev/null 2>&1") != 0) {
+    print "Avertissement : kea-dhcp4 n'est pas installé. La configuration générée ne pourra pas être utilisée immédiatement.\n";
 }
 
-# open dhcpd.conf for writing
-open(DHCPDCONF, "> $dhcpd_conf") || die "Couldn't open $dhcpd_conf for writing: $!\n";
-print DHCPDCONF $header;
+# Charger la configuration existante si elle existe
+my $config = { "Dhcp4" => {} };  # Configuration par défaut si le fichier n'existe pas
+my $config_exists = 0;
+my %comments;  # Pour stocker les commentaires associés aux sous-réseaux, pools, réservations
+if (-f $config_file) {
+    open my $fh, '<', $config_file or die "Impossible d'ouvrir $config_file: $!\n";
+    my @json_lines;
+    my $in_json = 0;
+    my $current_subnet;
+    my $current_pool;
+    my $current_ip;
+    my $last_key;
+    my $indent_level = 0;
+    my @pending_comments;  # Stocker les commentaires en attente
+    while (my $line = <$fh>) {
+        chomp $line;
+        print "DEBUG: Lecture de la ligne: $line\n" if $debug;
 
-# create a configuration file, depending on which version of dhcpd we found
-if ($dhcpd_version eq "2") {
-    # version 2, at least for now
-    print DHCPDCONF $dhcpd_conf_v2_part1;
-  
-    print DHCPDCONF qq(subnet $netnumber netmask $netmask { \n);
-    print DHCPDCONF qq(  range  $rangebegin $rangeend; \n);
-    print DHCPDCONF qq(  option domain-name "$dnsdomainname"; \n);
+        # Ignorer les commentaires et lignes vides avant le début du JSON
+        if (!$in_json && ($line =~ /^\s*\/\// || $line =~ /^\s*$/)) {
+            next;
+        }
 
-    if($dnsserver1 ne "") { 
-        print DHCPDCONF qq(  option domain-name-servers $dnsserver1); 
+        # Détecter le début de l'objet JSON
+        if (!$in_json && $line =~ /\{/) {
+            $in_json = 1;
+            $indent_level++;
+            push @json_lines, $line;
+            next;
+        }
+
+        # Compter les niveaux d'indentation
+        if ($in_json) {
+            if ($line =~ /\{/) {
+                $indent_level++;
+            } elsif ($line =~ /\}/) {
+                $indent_level--;
+                # Réinitialiser le contexte si on sort d'un bloc subnet ou réservation
+                if ($indent_level <= 2) {
+                    $current_subnet = undef;
+                    $current_pool = undef;
+                    $current_ip = undef;
+                }
+            }
+        }
+
+        # Collecter les commentaires
+        if ($in_json && $line =~ /^\s*\/\/\s*(.+)/) {
+            push @pending_comments, $1;
+            print "DEBUG: Commentaire ajouté aux commentaires en attente: $1\n" if $debug;
+            next;
+        }
+
+        # Identifier les clés pertinentes pour le contexte
+        if ($in_json && $line =~ /"subnet"\s*:\s*"([^"]+)"/) {
+            $current_subnet = $1;
+            $last_key = "subnet";
+            print "DEBUG: Détection de subnet: $current_subnet\n" if $debug;
+            if (@pending_comments) {
+                $comments{"subnet|$current_subnet"} = join(" ", @pending_comments);
+                print "DEBUG: Commentaire assigné à subnet $current_subnet: $comments{'subnet|$current_subnet'}\n" if $debug;
+                @pending_comments = ();
+            }
+        } elsif ($in_json && $line =~ /"pool"\s*:\s*"([^"]+)"/) {
+            if (!defined $current_subnet) {
+                warn "DEBUG: Pool trouvé hors d'un sous-réseau à la ligne $.\n" if $debug;
+                next;  # Ignorer les pools hors contexte
+            }
+            $current_pool = $1;
+            $last_key = "pool";
+            print "DEBUG: Détection de pool: $current_subnet|$current_pool\n" if $debug;
+            if (@pending_comments) {
+                $comments{"pool|$current_subnet|$current_pool"} = join(" ", @pending_comments);
+                print "DEBUG: Commentaire assigné à pool $current_subnet|$current_pool: $comments{'pool|$current_subnet|$current_pool'}\n" if $debug;
+                @pending_comments = ();
+            }
+        } elsif ($in_json && $line =~ /"ip-address"\s*:\s*"([^"]+)"/) {
+            $current_ip = $1;
+            $last_key = "ip-address";
+            print "DEBUG: Détection de réservation: ", (defined $current_subnet ? "$current_subnet|$current_ip" : "global|$current_ip"), "\n" if $debug;
+            if (@pending_comments) {
+                my $key = defined $current_subnet ? "reservation|$current_subnet|$current_ip" : "reservation|global|$current_ip";
+                $comments{$key} = join(" ", @pending_comments);
+                print "DEBUG: Commentaire assigné à réservation $key: $comments{$key}\n" if $debug;
+                @pending_comments = ();
+            }
+        } else {
+            $last_key = undef;
+        }
+
+        # Ajouter les lignes non-commentaires et non-vides au JSON
+        if ($in_json && $line !~ /^\s*$/ && $line !~ /^\s*\/\//) {
+            push @json_lines, $line;
+        }
+    }
+    close $fh;
+
+    # Vérifier si des lignes JSON ont été collectées
+    if (@json_lines) {
+        my $json_text = join("\n", @json_lines);
+        print "DEBUG: Contenu de \$json_text:\n$json_text\n" if $debug;
+        eval {
+            $config = JSON::PP->new->decode($json_text);
+        };
+        die "Erreur de parsing du fichier JSON $config_file: $@\n" if $@;
+        $config_exists = 1;
     } else {
-        print DHCPDCONF qq(  #option domain-name-servers <my_name_server_ip_address>); 
-    }
-    if($dnsserver2 ne "") { 
-        print DHCPDCONF qq(, $dnsserver2);
-    }
-    if($dnsserver3 ne "") { 
-        print DHCPDCONF qq(, $dnsserver3);
-    }
-    print DHCPDCONF qq(;\n);
-
-    print DHCPDCONF qq(  option routers $router; \n);
-
-    print DHCPDCONF qq(  # option-140 specifies the IP address of your SystemImager image server\n);
-    print DHCPDCONF qq(  option option-140 ) . $imageserver . qq(; \n);
-  
-    print DHCPDCONF qq(  # option-142 specifies the URL address of your ssh download\n);
-    print DHCPDCONF qq(  # This should be in the format of "http://$imageserver/systemimager/boot/".\n);
-    if($ssh_download_url eq "") { 
-        print DHCPDCONF qq(  #option option-142 "http://$imageserver/systemimager/boot/"; \n);
-    } else {
-        print DHCPDCONF qq(  option option-142 "$ssh_download_url"; \n);
+        die "Aucun contenu JSON valide trouvé dans $config_file\n" if $list_clients || $list_pools || $list_subnets;
     }
 
-    print DHCPDCONF qq(  # option-143 specifies the Flamethrower directory port.\n);
-    print DHCPDCONF qq(  # The default is "9000".\n);
-    if($flamethrower_directory_portbase eq "") { 
-        print DHCPDCONF qq(  #option option-143 "9000"; \n);
-    } else {
-        print DHCPDCONF qq(  option option-143 "$flamethrower_directory_portbase"; \n);
+    # Associer les commentaires à la structure $config
+    if (exists $config->{"Dhcp4"}->{"subnet4"}) {
+        foreach my $subnet (@{$config->{"Dhcp4"}->{"subnet4"}}) {
+            my $key = "subnet|$subnet->{subnet}";
+            if (exists $comments{$key}) {
+                $subnet->{"comment"} = $comments{$key};
+                print "DEBUG: Assignation du commentaire à subnet $subnet->{subnet}: $subnet->{comment}\n" if $debug;
+            } else {
+                print "DEBUG: Aucun commentaire trouvé pour subnet $subnet->{subnet}\n" if $debug;
+            }
+            if (exists $subnet->{"pools"}) {
+                foreach my $pool (@{$subnet->{"pools"}}) {
+                    my $pool_key = "pool|$subnet->{subnet}|$pool->{pool}";
+                    if (exists $comments{$pool_key}) {
+                        $pool->{"comment"} = $comments{$pool_key};
+                        print "DEBUG: Assignation du commentaire à pool $subnet->{subnet}|$pool->{pool}: $pool->{comment}\n" if $debug;
+                    } else {
+                        print "DEBUG: Aucun commentaire trouvé pour pool $subnet->{subnet}|$pool->{pool}\n" if $debug;
+                    }
+                }
+            }
+            if (exists $subnet->{"reservations"}) {
+                foreach my $reservation (@{$subnet->{"reservations"}}) {
+                    my $res_key = "reservation|$subnet->{subnet}|$reservation->{'ip-address'}";
+                    if (exists $comments{$res_key}) {
+                        $reservation->{"comment"} = $comments{$res_key};
+                        print "DEBUG: Assignation du commentaire à réservation $subnet->{subnet}|$reservation->{'ip-address'}: $reservation->{comment}\n" if $debug;
+                    } else {
+                        print "DEBUG: Aucun commentaire trouvé pour réservation $subnet->{subnet}|$reservation->{'ip-address'}\n" if $debug;
+                    }
+                }
+            }
+        }
     }
-
-    option_144($tmpfs_staging);
-
-    print DHCPDCONF qq(  # next-server is your network boot server\n);
-    if($boot_server eq "") { 
-        print DHCPDCONF qq(  #next-server $boot_server; \n);
-    } else {
-        print DHCPDCONF qq(  next-server $boot_server; \n);
-    }
-
-    print DHCPDCONF qq(\n  # log-servers\n);
-    if($log_server eq "") { 
-        print DHCPDCONF qq(  #option log-servers $log_server; \n);
-    } else {
-        print DHCPDCONF qq(  option log-servers $log_server; \n);
-    }
-
-    print DHCPDCONF qq(  # option-141 is the port number your log server uses\n);
-    if($log_server_port eq "") { 
-        print DHCPDCONF qq(  #option-141 "$log_server_port"; \n);
-    } else {
-        print DHCPDCONF qq(  option-141 "$log_server_port"; \n);
-    }
-
-    print DHCPDCONF qq(} \n);
-  
-} else {
-    # version 3, at least for now
-    print DHCPDCONF $dhcpd_conf_v3_part1;
-  
-    print DHCPDCONF qq(# Imageserver\n);
-    print DHCPDCONF qq(option option-140 code 140 = ip-address;\n);
-    print DHCPDCONF qq(\n);
-
-    print DHCPDCONF qq(# log_server_port\n);
-    print DHCPDCONF qq(option option-141 code 141 = unsigned integer 16;\n);
-    print DHCPDCONF qq(\n);
-
-    print DHCPDCONF qq(# ssh_download_url\n);
-    print DHCPDCONF qq(option option-142 code 142 = string;\n);
-    print DHCPDCONF qq(\n);
-
-    print DHCPDCONF qq(# flamethrower_directory_portbase\n);
-    print DHCPDCONF qq(option option-143 code 143 = unsigned integer 16;\n);
-    print DHCPDCONF qq(\n);
-
-    print DHCPDCONF qq(# tmpfs_staging\n);
-    print DHCPDCONF qq(option option-144 code 144 = string;\n);
-    print DHCPDCONF qq(\n);
-
-    print DHCPDCONF qq(# option-140 is the IP address of your SystemImager image server\n);
-    print DHCPDCONF qq(option option-140 ) . $imageserver . qq(;\n);
-    print DHCPDCONF qq(\n);
-
-    print DHCPDCONF qq(# option-142 specifies the URL address of your ssh download\n);
-    print DHCPDCONF qq(# This should be in the format of "http://$imageserver/systemimager/boot/".\n);
-    if($ssh_download_url eq "") { 
-        print DHCPDCONF qq(#option option-142 "http://$imageserver/systemimager/boot/"; \n);
-    } else {
-        print DHCPDCONF qq(option option-142 "$ssh_download_url"; \n);
-    }
-    print DHCPDCONF qq(\n);
-
-    print DHCPDCONF qq(# option-143 specifies the Flamethrower directory port.\n);
-    print DHCPDCONF qq(# The default is "9000".\n);
-    if($flamethrower_directory_portbase eq "") { 
-        print DHCPDCONF qq(#option option-143 "9000"; \n);
-    } else {
-        print DHCPDCONF qq(option option-143 "$flamethrower_directory_portbase"; \n);
-    }
-    print DHCPDCONF qq(\n);
-
-    option_144($tmpfs_staging);
-
-    print DHCPDCONF qq(# next-server is your network boot server\n);
-    if($boot_server eq "") { 
-        print DHCPDCONF qq(#next-server 1.2.3.4; \n);
-    } else {
-        print DHCPDCONF qq(next-server $boot_server; \n);
-    }
-    print DHCPDCONF qq(\n);
-
-    print DHCPDCONF qq(# log-servers\n);
-    if($log_server eq "") { 
-        print DHCPDCONF qq(#option log-servers 1.2.3.4; \n);
-    } else {
-        print DHCPDCONF qq(option log-servers $log_server; \n);
-    }
-    print DHCPDCONF qq(\n);
-
-    print DHCPDCONF qq(# option-141 is the port number your log server uses\n);
-    if($log_server_port eq "") { 
-        print DHCPDCONF qq(#option option-141 514; \n);
-    } else {
-        print DHCPDCONF qq(option option-141 $log_server_port; \n);
-    }
-    print DHCPDCONF qq(\n);
-
-    print DHCPDCONF $dhcpd_conf_v3_part2;
-   
-    print DHCPDCONF qq(subnet $netnumber netmask $netmask { \n);
-    print DHCPDCONF qq(  range  $rangebegin $rangeend; \n);
-    print DHCPDCONF qq(  option domain-name "$dnsdomainname"; \n);
-    if($dnsserver1 ne "") { print DHCPDCONF qq(  option domain-name-servers $dnsserver1); }
-    if($dnsserver2 ne "") { print DHCPDCONF qq(, $dnsserver2); }
-    if($dnsserver3 ne "") { print DHCPDCONF qq(, $dnsserver3); }
-    if($dnsserver1 ne "") { print DHCPDCONF qq(;\n); }
-    print DHCPDCONF qq(  option routers $router; \n);
-    print DHCPDCONF qq( } \n);
-
-}
-
-
-# close and chmod the new dhcpd.conf file
-close(DHCPDCONF);
-system("chmod 660 $dhcpd_conf");
-
-
-# Oh where oh where could my leases file directory be?
-my @lease_file_directories_du_jour = ( 
-  "/var/lib/dhcpd",
-  "/var/dhcp",
-  "/var/state/dhcp",
-  "/etc"
-);
-
-my $dhcpd_lease_file_directory;
-foreach my $directory (@lease_file_directories_du_jour) {
-    # does *this* one exist?
-    if ( -d "$directory" ) { 
-        $dhcpd_lease_file_directory = $directory;
-    }
-    last if ( $dhcpd_lease_file_directory );
-}
-
-# Touch dhcpd.leases file so that dhcpd won't fart when started.
-# Different installs put the file in different places so we touch
-# one of several potential files and a monkey.
-if( -d "$dhcpd_lease_file_directory" )
-{
-     my $file="$dhcpd_lease_file_directory/dhcpd.leases";
-     system("touch $file");
-     ($?) && die "\n$program_name Couldn't touch $file.\n";
-}
-
-# words of wisdom
-system("clear");
-print <<"EOF";
-
-The dhcp server configuration file ($dhcpd_conf) file has been 
-created for you.  Please verify it for accuracy.
-
-If this file does not look satisfactory, you can run this command again
-to re-create it: "si_mkdhcpserver"
-
-WARNING!:  If you have multiple physical network interfaces, be sure to 
-edit the init script that starts dhcpd to specify the interface that 
-is connected to your DHCP clients.  Here's an example:
-
- Change "/usr/sbin/dhcpd" to "/usr/sbin/dhcpd eth1".
-
-Depending on your distribution, you may be able to set this with the 
-"INTERFACES" variable in "/etc/default/dhcp", "/etc/default/dhcp3-server",
-or similar, or in your dhcpd initialization script ("/etc/init.d/dhcpd", 
-"/etc/init.d/dhcp3-server", or similar).
-
-Also, be sure to start or restart your dhcpd daemon.  This can usually
-be done with a command like "/etc/init.d/dhcpd restart" or similar.
-
-EOF
-
-# Oh where oh where could my init script be?
-my @init_scripts_du_jour = ( 
-  "/etc/init.d/dhcp3-server",
-  "/etc/init.d/dhcp",
-  "/etc/init.d/dhcpd",
-  "/etc/rc.d/init.d/dhcpd"
-);
-
-foreach my $file (@init_scripts_du_jour) {
-    if( -e $file ){
-        print "Would you like me to restart your DHCP server software now? (y/[n]): ";
-        $continue=get_response();
-        $continue=lc($continue);
-
-        if( $continue eq "y" ){
-            my $cmd="$file restart";
-            system($cmd);
-            exit 0;
+    if (exists $config->{"Dhcp4"}->{"reservations"}) {
+        foreach my $reservation (@{$config->{"Dhcp4"}->{"reservations"}}) {
+            my $res_key = "reservation|global|$reservation->{'ip-address'}";
+            if (exists $comments{$res_key}) {
+                $reservation->{"comment"} = $comments{$res_key};
+                print "DEBUG: Assignation du commentaire à réservation globale $reservation->{'ip-address'}: $reservation->{comment}\n" if $debug;
+            } else {
+                print "DEBUG: Aucun commentaire trouvé pour réservation globale $reservation->{'ip-address'}\n" if $debug;
+            }
         }
     }
 }
 
-exit 0;
-
-
-
-# Subroutines
-sub get_response {
-    my $garbage_out=$_[0];
-    my $garbage_in=<STDIN>;
-    chomp $garbage_in;
-    unless($garbage_in eq "") { $garbage_out = $garbage_in; }
-    return $garbage_out;
+# Vérifier si --add-network est requis pour une nouvelle configuration
+if (!$config_exists && !@add_networks && !@add_clients && !@del_clients && !@del_networks && !($list_clients || $list_pools || $list_subnets)) {
+    die "L'option --add-network est requise pour créer une nouvelle configuration\n";
 }
 
-# Usage: option_144($tmpfs_staging);
-sub option_144 {
+# Obtenir l'adresse IP locale si nécessaire
+my $local_ip = ($has_modifications || $list_subnets || $list_pools || $list_clients) ? get_local_ip(@add_networks, $config) : undef;
 
-    my $value = shift;
+# Gestion des options de listage
+if ($list_clients || $list_pools || $list_subnets) {
+    # Préparer les interfaces réseau pour les sous-réseaux
+    my %subnet_interfaces;
+    if (exists $config->{"Dhcp4"}->{"subnet4"}) {
+        my @all_networks = map { $_->{"subnet"} } @{$config->{"Dhcp4"}->{"subnet4"}};
+        %subnet_interfaces = map { $_ => join(",", get_network_interfaces($_)) || "N/A" } @all_networks; # N/A si aucune interface
+    }
 
-    print DHCPDCONF qq(  # \n);
-    print DHCPDCONF qq(  # option-144 tells your auto-install client to spool the image into a tmpfs\n);
-    print DHCPDCONF qq(  # prior to laying it down on disk.  It is not certain that this is always\n);
-    print DHCPDCONF qq(  # a good thing to do.  And if you're feeling gutsy and want to try it, be\n);
-    print DHCPDCONF qq(  # sure that your (memory + swap) is at least twice the size of your image\n);
-    print DHCPDCONF qq(  # or your image transfer will fail when the tmpfs filesystem gets full!!!\n);
-    print DHCPDCONF qq(  # If unsure, say "no".\n);
-    print DHCPDCONF qq(  # \n);
-    print DHCPDCONF qq(  option option-144 "$value"; \n);
-    print DHCPDCONF qq(\n);
+    # --list-clients
+    if ($list_clients) {
+        my @client_rows;
+        if (exists $config->{"Dhcp4"}->{"subnet4"}) {
+            foreach my $subnet (@{$config->{"Dhcp4"}->{"subnet4"}}) {
+                my $subnet_id = $subnet->{"id"} // "N/A";
+                my $interface = $subnet_interfaces{$subnet->{"subnet"}} // "N/A";
+                if (exists $subnet->{"reservations"}) {
+                    foreach my $reservation (@{$subnet->{"reservations"}}) {
+                        push @client_rows, [
+                            $subnet->{"subnet"},
+                            $subnet_id,
+                            $interface,
+                            $reservation->{"hostname"} // "N/A",
+                            $reservation->{"hw-address"} // "N/A",
+                            $reservation->{"ip-address"} // "N/A"
+                        ];
+                    }
+                }
+            }
+        }
+        if (exists $config->{"Dhcp4"}->{"reservations"}) {
+            foreach my $reservation (@{$config->{"Dhcp4"}->{"reservations"}}) {
+                push @client_rows, [
+                    "global",
+                    "N/A",
+                    "N/A",
+                    $reservation->{"hostname"} // "N/A",
+                    $reservation->{"hw-address"} // "N/A",
+                    $reservation->{"ip-address"} // "N/A"
+                ];
+            }
+        }
+
+        if (@client_rows) {
+            if ($csv) {
+                print "subnet,subnet-id,net-interface,fqdn,MAC,IP\n";
+                foreach my $row (@client_rows) {
+                    print join(",", @$row), "\n";
+                }
+            } else {
+                my $tb = Text::Table->new("subnet", "subnet-id", "net-interface", "fqdn", "MAC", "IP");
+                $tb->load(@client_rows);
+                print $tb;
+            }
+        } else {
+            print "Aucune réservation trouvée.\n";
+        }
+    }
+
+    # --list-pools
+    if ($list_pools) {
+        my @pool_rows;
+        if (exists $config->{"Dhcp4"}->{"subnet4"}) {
+            foreach my $subnet (@{$config->{"Dhcp4"}->{"subnet4"}}) {
+                my $subnet_id = $subnet->{"id"} // "N/A";
+                my $interface = $subnet_interfaces{$subnet->{"subnet"}} // "N/A";
+                if (exists $subnet->{"pools"}) {
+                    foreach my $pool (@{$subnet->{"pools"}}) {
+                        my ($start, $end) = split(/\s*-\s*/, $pool->{"pool"});
+                        push @pool_rows, [
+                            $subnet->{"subnet"},
+                            $subnet_id,
+                            $interface,
+                            $start,
+                            $end
+                        ];
+                    }
+                }
+            }
+        }
+
+        if (@pool_rows) {
+            if ($csv) {
+                print "subnet,subnet-id,net-interface,pool-start,pool-end\n";
+                foreach my $row (@pool_rows) {
+                    print join(",", @$row), "\n";
+                }
+            } else {
+                my $tb = Text::Table->new("subnet", "subnet-id", "net-interface", "pool start", "pool end");
+                $tb->load(@pool_rows);
+                print $tb;
+            }
+        } else {
+            print "Aucun pool trouvé.\n";
+        }
+    }
+
+    # --list-subnets
+    if ($list_subnets) {
+        my @subnet_rows;
+        if (exists $config->{"Dhcp4"}->{"subnet4"}) {
+            foreach my $subnet (@{$config->{"Dhcp4"}->{"subnet4"}}) {
+                my ($ip, $mask) = split('/', $subnet->{"subnet"});
+                my ($ip_min, $ip_max) = get_subnet_ip_range($ip, $mask);
+                push @subnet_rows, [
+                    $subnet->{"subnet"},
+                    $subnet->{"id"} // "N/A",
+                    $ip_min,
+                    $ip_max
+                ];
+            }
+        }
+
+        if (@subnet_rows) {
+            if ($csv) {
+                print "subnet,subnet-id,ip-min,ip-max\n";
+                foreach my $row (@subnet_rows) {
+                    print join(",", @$row), "\n";
+                }
+            } else {
+                my $tb = Text::Table->new("subnet", "subnet-id", "ip-min", "ip-max");
+                $tb->load(@subnet_rows);
+                print $tb;
+            }
+        } else {
+            print "Aucun sous-réseau trouvé.\n";
+        }
+    }
+
+    # Sortir si aucune modification n'est demandée
+    exit 0 unless $has_modifications;
 }
 
+# Gestion du domaine DNS par défaut
+unless ($dns_domain) {
+    if (-r '/etc/resolv.conf') {
+        open my $resolv, '<', '/etc/resolv.conf' or die "Impossible d'ouvrir /etc/resolv.conf: $!\n";
+        while (<$resolv>) {
+            if (/^domain\s+(\S+)/) {
+                $dns_domain = $1;
+                last;
+            }
+        }
+        close $resolv;
+    }
+}
+
+# Gestion des serveurs par défaut
+$image_server = $local_ip unless $image_server;
+$boot_server = $local_ip unless $boot_server;
+
+# Gestion de ssh-download-url
+if (defined $ssh_download_url && $ssh_download_url eq '') {
+    $ssh_download_url = "ssh://$image_server/var/lib/systemimager/images";
+}
+
+# Gestion de flamethrower-port-base
+if (defined $flamethrower_port_base && $flamethrower_port_base == 0) {
+    $flamethrower_port_base = 8000;
+}
+
+# Validation des réseaux à ajouter (si fournis)
+my @subnets;
+if (@add_networks) {
+    my $max_id = 0;
+    my %used_ids;
+    if (exists $config->{"Dhcp4"}->{"subnet4"}) {
+        foreach my $subnet (@{$config->{"Dhcp4"}->{"subnet4"}}) {
+            if (exists $subnet->{"id"} && $subnet->{"id"} =~ /^\d+$/) {
+                $used_ids{$subnet->{"id"}} = 1;
+                $max_id = $subnet->{"id"} if $subnet->{"id"} > $max_id;
+            }
+        }
+    }
+    foreach my $i (0 .. $#add_networks / 3) {
+        my ($net, $ip_start, $ip_end) = @add_networks[$i*3 .. $i*3+2];
+        my ($ip, $mask) = split('/', $net);
+        die "Format réseau invalide: $net\n" unless valid_ip($ip) && $mask =~ /^\d+$/ && $mask >= 0 && $mask <= 32;
+
+        # Vérifier si IP début est fournie, alors IP fin doit l'être
+        if (defined $ip_start && !defined $ip_end) {
+            die "Erreur: IP de début fournie ($ip_start) mais IP de fin manquante pour le réseau $net\n";
+        }
+
+        # Créer la structure du sous-réseau
+        my $subnet = {
+            "subnet" => $net,
+            "option-data" => [ { "name" => "routers", "data" => first_usable_ip($ip, $mask) } ]
+        };
+
+        # Gérer le pool
+        if (defined $ip_start && defined $ip_end) {
+            # Valider les IPs de début et de fin
+            die "IP de début invalide: $ip_start\n" unless valid_ip($ip_start);
+            die "IP de fin invalide: $ip_end\n" unless valid_ip($ip_end);
+            die "IP de début ($ip_start) n'est pas dans le sous-réseau $net\n" unless is_ip_in_network($ip_start, $mask, $ip, $mask);
+            die "IP de fin ($ip_end) n'est pas dans le sous-réseau $net\n" unless is_ip_in_network($ip_end, $mask, $ip, $mask);
+            die "IP de début ($ip_start) est supérieure à IP de fin ($ip_end)\n" if ip_to_int($ip_start) > ip_to_int($ip_end);
+
+            # Vérifier les conflits avec les réservations
+            my @conflicting_reservations;
+            $config->{"Dhcp4"}->{"reservations"} ||= [];
+            foreach my $reservation (@{$config->{"Dhcp4"}->{"reservations"}}) {
+                if ($reservation->{'ip-address'} && is_ip_in_range($reservation->{'ip-address'}, $ip_start, $ip_end)) {
+                    push @conflicting_reservations, $reservation;
+                }
+            }
+            if (@conflicting_reservations) {
+                print "Erreur: Le pool $ip_start - $ip_end dans le sous-réseau $net est en conflit avec les réservations suivantes :\n";
+                foreach my $res (@conflicting_reservations) {
+                    print "  - ", ($res->{"hostname"} || $res->{'hw-address'} || $res->{'ip-address'}), "\n";
+                }
+                die "Abandon de l'opération pour le sous-réseau $net\n";
+            }
+
+            # Vérifier les chevauchements et inclusions avec les pools existants
+            my $existing_subnet = (exists $config->{"Dhcp4"}->{"subnet4"} ? 
+                (grep { $_->{"subnet"} eq $net } @{$config->{"Dhcp4"}->{"subnet4"}})[0] : undef);
+            my @new_pools;
+            if ($existing_subnet && exists $existing_subnet->{"pools"}) {
+                foreach my $pool (@{$existing_subnet->{"pools"}}) {
+                    my ($existing_start, $existing_end) = split(/\s*-\s*/, $pool->{"pool"});
+                    my ($is_included, $is_partial_overlap) = is_range_overlap($ip_start, $ip_end, $existing_start, $existing_end);
+                    if ($is_partial_overlap) {
+                        die "Erreur: Le pool $ip_start - $ip_end chevauche partiellement le pool existant $existing_start - $existing_end dans le sous-réseau $net\n";
+                    }
+                    push @new_pools, $pool unless $is_included;
+                }
+                push @new_pools, {
+                    "pool" => "$ip_start - $ip_end",
+                    "comment" => exists $existing_subnet->{"pools"} && grep { $_->{"pool"} eq "$ip_start - $ip_end" } @{$existing_subnet->{"pools"}} ? 
+                                 (grep { $_->{"pool"} eq "$ip_start - $ip_end" } @{$existing_subnet->{"pools"}})[0]->{"comment"} || 
+                                 "Pool $ip_start - $ip_end added on " . localtime() : 
+                                 "Pool $ip_start - $ip_end added on " . localtime()
+                };
+                $subnet->{"pools"} = \@new_pools;
+            } else {
+                $subnet->{"pools"} = [ {
+                    "pool" => "$ip_start - $ip_end",
+                    "comment" => "Pool $ip_start - $ip_end added on " . localtime()
+                } ];
+            }
+        } else {
+            $subnet->{"pools"} = [];
+        }
+
+        # Assigner un ID unique pour le commentaire
+        my $existing_subnet = (exists $config->{"Dhcp4"}->{"subnet4"} ? 
+            (grep { $_->{"subnet"} eq $net } @{$config->{"Dhcp4"}->{"subnet4"}})[0] : undef);
+        if ($existing_subnet && exists $existing_subnet->{"id"} && $existing_subnet->{"id"} =~ /^\d+$/) {
+            $subnet->{"id"} = $existing_subnet->{"id"};
+            $used_ids{$subnet->{"id"}} = 1;
+            $subnet->{"comment"} = $existing_subnet->{"comment"} if exists $existing_subnet->{"comment"};
+        } else {
+            $max_id++;
+            while (exists $used_ids{$max_id}) {
+                $max_id++;
+            }
+            $subnet->{"id"} = $max_id;
+            $used_ids{$max_id} = 1;
+            $subnet->{"comment"} = "Subnet-$max_id $net added on " . localtime();
+        }
+        push @subnets, $subnet;
+    }
+}
+
+# Validation des réseaux à supprimer
+my @networks_to_delete;
+if (@del_networks) {
+    foreach my $i (0 .. $#del_networks / 2) {
+        my ($net, $force) = @del_networks[$i*2 .. $i*2+1];
+        my ($ip, $mask) = split('/', $net);
+        die "Format réseau invalide: $net\n" unless valid_ip($ip) && $mask =~ /^\d+$/ && $mask >= 0 && $mask <= 32;
+        $force = (defined $force && $force eq '--force') ? 1 : 0;
+        push @networks_to_delete, { "subnet" => $net, "force" => $force };
+    }
+}
+
+# Validation des serveurs DNS
+if (@dns_servers) {
+    @dns_servers = split(/\s+/, join(' ', @dns_servers));
+    foreach my $dns (@dns_servers) {
+        die "Serveur DNS invalide: $dns\n" unless valid_ip($dns) || valid_fqdn($dns);
+    }
+}
+
+# Validation de l'image-server et boot-server
+die "image-server invalide: $image_server\n" unless valid_ip($image_server) || valid_fqdn($image_server);
+die "boot-server invalide: $boot_server\n" unless valid_ip($boot_server) || valid_fqdn($boot_server);
+
+# Validation de log-server (IP ou FQDN)
+if ($log_server) {
+    die "log-server invalide: $log_server\n" unless valid_ip($log_server) || valid_fqdn($log_server);
+}
+
+# Validation de log-server-port
+if (defined $log_server_port) {
+    die "log-server-port doit être un entier entre 1 et 65535\n" unless $log_server_port >= 1 && $log_server_port <= 65535;
+}
+
+# Validation des clients à ajouter
+my @validated_clients;
+if (@add_clients) {
+    my @subnets_for_validation = @subnets;
+    if (exists $config->{"Dhcp4"}->{"subnet4"}) {
+        push @subnets_for_validation, @{$config->{"Dhcp4"}->{"subnet4"}};
+    }
+
+    foreach my $i (0 .. $#add_clients / 3) {
+        my ($name, $mac, $ip) = @add_clients[$i*3 .. $i*3+2];
+        unless ($name && $mac && $ip) {
+            print "Erreur: --add-client mal formé (nom, MAC, IP requis): $name $mac $ip\n";
+            next;
+        }
+        unless ($name =~ /^[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]$/) {
+            print "Erreur: Nom d'hôte invalide: $name\n";
+            next;
+        }
+        unless ($mac =~ /^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$/) {
+            print "Erreur: Adresse MAC invalide: $mac\n";
+            next;
+        }
+        unless (valid_ip($ip)) {
+            print "Erreur: Adresse IP invalide: $ip\n";
+            next;
+        }
+
+        # Trouver le sous-réseau correspondant à l'IP
+        my $ip_in_subnet = 0;
+        my $target_subnet;
+        foreach my $subnet (@subnets_for_validation) {
+            my ($net_ip, $mask) = split('/', $subnet->{"subnet"});
+            if (defined $mask && is_ip_in_network($ip, $mask, $net_ip, $mask)) {
+                $ip_in_subnet = 1;
+                $target_subnet = $subnet;
+                last;
+            }
+        }
+        unless ($ip_in_subnet || $global) {
+            print "Erreur: L'IP $ip ne correspond à aucun sous-réseau défini. Utilisez --global pour une réservation globale.\n";
+            next;
+        }
+
+        # Vérifier les doublons dans toute la configuration (sous-réseaux et global)
+        my $duplicate_name = 0;
+        my $duplicate_mac = 0;
+        my $duplicate_ip = 0;
+        my $duplicate_location = "";
+
+        # Vérifier les réservations globales
+        $config->{"Dhcp4"}->{"reservations"} ||= [];
+        foreach my $reservation (@{$config->{"Dhcp4"}->{"reservations"}}) {
+            if ($reservation->{"hostname"} && $reservation->{"hostname"} eq $name) {
+                $duplicate_name = 1;
+                $duplicate_location = "global";
+                last;
+            }
+            if ($reservation->{'hw-address'} && lc($reservation->{'hw-address'}) eq lc($mac)) {
+                $duplicate_mac = 1;
+                $duplicate_location = "global";
+                last;
+            }
+            if ($reservation->{'ip-address'} && $reservation->{'ip-address'} eq $ip) {
+                $duplicate_ip = 1;
+                $duplicate_location = "global";
+                last;
+            }
+        }
+
+        # Vérifier les réservations dans tous les sous-réseaux
+        if (exists $config->{"Dhcp4"}->{"subnet4"}) {
+            foreach my $subnet (@{$config->{"Dhcp4"}->{"subnet4"}}) {
+                next unless exists $subnet->{"reservations"};
+                foreach my $reservation (@{$subnet->{"reservations"}}) {
+                    if ($reservation->{"hostname"} && $reservation->{"hostname"} eq $name) {
+                        $duplicate_name = 1;
+                        $duplicate_location = "subnet $subnet->{subnet}";
+                        last;
+                    }
+                    if ($reservation->{'hw-address'} && lc($reservation->{'hw-address'}) eq lc($mac)) {
+                        $duplicate_mac = 1;
+                        $duplicate_location = "subnet $subnet->{subnet}";
+                        last;
+                    }
+                    if ($reservation->{'ip-address'} && $reservation->{'ip-address'} eq $ip) {
+                        $duplicate_ip = 1;
+                        $duplicate_location = "subnet $subnet->{subnet}";
+                        last;
+                    }
+                }
+                last if $duplicate_name || $duplicate_mac || $duplicate_ip;
+            }
+        }
+
+        if ($duplicate_name) {
+            print "Erreur: Nom d'hôte $name déjà utilisé ($duplicate_location)\n";
+            next;
+        }
+        if ($duplicate_mac) {
+            print "Erreur: Adresse MAC $mac déjà utilisée ($duplicate_location)\n";
+            next;
+        }
+        if ($duplicate_ip) {
+            print "Erreur: Adresse IP $ip déjà utilisée ($duplicate_location)\n";
+            next;
+        }
+
+        # Ajouter la réservation validée
+        my $reservation = {
+            "hostname" => $name,
+            'hw-address' => $mac,
+            'ip-address' => $ip,
+            "comment" => $ip_in_subnet && !$global ? 
+                         "Reservation for $name in subnet $target_subnet->{subnet} added on " . localtime() :
+                         "Global reservation for $name ($mac, $ip) added on " . localtime()
+        };
+        if ($ip_in_subnet && !$global) {
+            $reservation->{target_subnet} = $target_subnet; # Marquer le sous-réseau cible
+        }
+        push @validated_clients, $reservation;
+    }
+}
+
+# Suppression des clients
+my $deleted_count = 0;
+my @deleted_clients;
+if (@del_clients) {
+    my @remaining_global_reservations;
+    $config->{"Dhcp4"}->{"reservations"} ||= [];
+    foreach my $reservation (@{$config->{"Dhcp4"}->{"reservations"}}) {
+        my $keep = 1;
+        foreach my $criterion (@del_clients) {
+            $criterion =~ s/\*/.*/g;  # Convertir wildcard en regex
+            if (($reservation->{"hostname"} && $reservation->{"hostname"} =~ /^$criterion$/) ||
+                ($reservation->{'hw-address'} && $reservation->{'hw-address'} =~ /^$criterion$/i) ||
+                ($reservation->{'ip-address'} && $reservation->{'ip-address'} =~ /^$criterion$/)) {
+                $keep = 0;
+                $deleted_count++;
+                push @deleted_clients, $reservation->{"hostname"} || $reservation->{'hw-address'} || $reservation->{'ip-address'};
+            }
+        }
+        push @remaining_global_reservations, $reservation if $keep;
+    }
+    $config->{"Dhcp4"}->{"reservations"} = \@remaining_global_reservations;
+
+    # Supprimer les réservations dans les sous-réseaux
+    if (exists $config->{"Dhcp4"}->{"subnet4"}) {
+        foreach my $subnet (@{$config->{"Dhcp4"}->{"subnet4"}}) {
+            next unless exists $subnet->{"reservations"};
+            my @remaining_subnet_reservations;
+            foreach my $reservation (@{$subnet->{"reservations"}}) {
+                my $keep = 1;
+                foreach my $criterion (@del_clients) {
+                    $criterion =~ s/\*/.*/g;
+                    if (($reservation->{"hostname"} && $reservation->{"hostname"} =~ /^$criterion$/) ||
+                        ($reservation->{'hw-address'} && $reservation->{'hw-address'} =~ /^$criterion$/i) ||
+                        ($reservation->{'ip-address'} && $reservation->{'ip-address'} =~ /^$criterion$/)) {
+                        $keep = 0;
+                        $deleted_count++;
+                        push @deleted_clients, $reservation->{"hostname"} || $reservation->{'hw-address'} || $reservation->{'ip-address'};
+                    }
+                }
+                push @remaining_subnet_reservations, $reservation if $keep;
+            }
+            $subnet->{"reservations"} = \@remaining_subnet_reservations;
+        }
+    }
+
+    if ($deleted_count > 0) {
+        print "Supprimé $deleted_count client(s) : ", join(", ", @deleted_clients), "\n";
+    } else {
+        print "Aucun client supprimé\n";
+    }
+}
+
+# Ajouter les clients validés
+if (@validated_clients) {
+    foreach my $client (@validated_clients) {
+        if (exists $client->{target_subnet} && !$global) {
+            # Ajouter la réservation dans le sous-réseau cible
+            my $target_subnet = $client->{target_subnet};
+            $target_subnet->{"reservations"} ||= [];
+            my $existing_reservation = (grep { $_->{'ip-address'} eq $client->{'ip-address'} } @{$target_subnet->{"reservations"}})[0];
+            if ($existing_reservation && exists $existing_reservation->{"comment"}) {
+                $client->{"comment"} = $existing_reservation->{"comment"};
+            }
+            push @{$target_subnet->{"reservations"}}, {
+                "hostname" => $client->{"hostname"},
+                'hw-address' => $client->{'hw-address'},
+                'ip-address' => $client->{'ip-address'},
+                "comment" => $client->{"comment"}
+            };
+        } else {
+            # Ajouter la réservation globalement
+            $config->{"Dhcp4"}->{"reservations"} ||= [];
+            my $existing_reservation = (grep { $_->{'ip-address'} eq $client->{'ip-address'} } @{$config->{"Dhcp4"}->{"reservations"}})[0];
+            if ($existing_reservation && exists $existing_reservation->{"comment"}) {
+                $client->{"comment"} = $existing_reservation->{"comment"};
+            }
+            push @{$config->{"Dhcp4"}->{"reservations"}}, {
+                "hostname" => $client->{"hostname"},
+                'hw-address' => $client->{'hw-address'},
+                'ip-address' => $client->{'ip-address'},
+                "comment" => $client->{"comment"}
+            };
+        }
+    }
+}
+
+# Gestion des suppressions de sous-réseaux
+my %existing_subnets;
+my %used_ids;
+my $max_id = 0;
+
+# Collecter les sous-réseaux existants et leurs IDs
+if (exists $config->{"Dhcp4"}->{"subnet4"}) {
+    foreach my $subnet (@{$config->{"Dhcp4"}->{"subnet4"}}) {
+        $existing_subnets{$subnet->{"subnet"}} = $subnet;
+        if (exists $subnet->{"id"} && $subnet->{"id"} =~ /^\d+$/) {
+            $used_ids{$subnet->{"id"}} = 1;
+            $max_id = $subnet->{"id"} if $subnet->{"id"} > $max_id;
+        }
+    }
+}
+
+# Traiter les suppressions de sous-réseaux
+my @deleted_subnets;
+my @deleted_reservations;
+foreach my $del (@networks_to_delete) {
+    my $net = $del->{"subnet"};
+    my $force = $del->{"force"};
+    unless (exists $existing_subnets{$net}) {
+        print "Erreur: Le sous-réseau $net n'existe pas dans la configuration\n";
+        next;
+    }
+
+    # Vérifier les réservations dans le sous-réseau
+    my @conflicting_reservations;
+    my @remaining_global_reservations;
+    $config->{"Dhcp4"}->{"reservations"} ||= [];
+    foreach my $reservation (@{$config->{"Dhcp4"}->{"reservations"}}) {
+        my ($net_ip, $mask) = split('/', $net);
+        if ($reservation->{'ip-address'} && is_ip_in_network($reservation->{'ip-address'}, $mask, $net_ip, $mask)) {
+            push @conflicting_reservations, $reservation;
+        } else {
+            push @remaining_global_reservations, $reservation;
+        }
+    }
+
+    if (@conflicting_reservations && !$force) {
+        print "Erreur: Impossible de supprimer le sous-réseau $net car il contient des réservations :\n";
+        foreach my $res (@conflicting_reservations) {
+            print "  - ", ($res->{"hostname"} || $res->{'hw-address'} || $res->{'ip-address'}), "\n";
+        }
+        print "Utilisez --force pour supprimer le sous-réseau et ses réservations.\n";
+        next;
+    }
+
+    # Supprimer le sous-réseau
+    delete $existing_subnets{$net};
+    push @deleted_subnets, $net;
+
+    # Supprimer les réservations si --force est utilisé
+    if ($force && @conflicting_reservations) {
+        push @deleted_reservations, map { $_->{"hostname"} || $_->{'hw-address'} || $_->{'ip-address'} } @conflicting_reservations;
+        $config->{"Dhcp4"}->{"reservations"} = \@remaining_global_reservations;
+    }
+}
+
+# Afficher les sous-réseaux et réservations supprimés
+if (@deleted_subnets) {
+    print "Sous-réseau(s) supprimé(s) : ", join(", ", @deleted_subnets), "\n";
+    if (@deleted_reservations) {
+        print "Réservation(s) supprimée(s) : ", join(", ", @deleted_reservations), "\n";
+    }
+}
+
+# Ajouter ou mettre à jour les sous-réseaux fournis
+foreach my $subnet (@subnets) {
+    # Préserver les attributs existants (comme réservations ou options spécifiques)
+    if (exists $existing_subnets{$subnet->{"subnet"}}) {
+        my $existing_subnet = $existing_subnets{$subnet->{"subnet"}};
+        # Conserver les attributs non gérés par le script
+        foreach my $key (keys %$existing_subnet) {
+            next if $key eq "id" || $key eq "subnet" || $key eq "pools" || $key eq "option-data" || $key eq "comment";
+            $subnet->{$key} = $existing_subnet->{$key};
+        }
+        # Conserver les options non gérées
+        my %existing_option_data;
+        if (exists $existing_subnet->{"option-data"}) {
+            foreach my $opt (@{$existing_subnet->{"option-data"}}) {
+                next unless defined $opt->{"name"};
+                $existing_option_data{$opt->{"name"}} = $opt unless grep { defined $_->{"name"} && $_->{"name"} eq $opt->{"name"} } @{$subnet->{"option-data"}};
+            }
+        }
+        $subnet->{"option-data"} = [ @{$subnet->{"option-data"}}, values %existing_option_data ];
+    }
+    $existing_subnets{$subnet->{"subnet"}} = $subnet;
+}
+
+# Assigner des IDs uniques aux sous-réseaux sans ID
+foreach my $subnet (values %existing_subnets) {
+    unless (exists $subnet->{"id"} && $subnet->{"id"} =~ /^\d+$/) {
+        $max_id++;
+        while (exists $used_ids{$max_id}) {
+            $max_id++;
+        }
+        $subnet->{"id"} = $max_id;
+        $used_ids{$max_id} = 1;
+        $subnet->{"comment"} = "Subnet-$max_id $subnet->{subnet} added on " . localtime();
+        print "DEBUG: Assignation de l'ID $max_id au sous-réseau $subnet->{subnet} avec commentaire: $subnet->{comment}\n" if $debug;
+    }
+}
+
+# Vérifier les doublons d'ID
+my %id_check;
+foreach my $subnet (values %existing_subnets) {
+    die "Erreur: ID de sous-réseau dupliqué : $subnet->{id} pour $subnet->{subnet}\n" if exists $id_check{$subnet->{"id"}};
+    $id_check{$subnet->{"id"}} = 1;
+}
+
+# Si aucune modification n'est demandée et aucun sous-réseau n'existe après suppression, sortir en erreur
+if (!@add_networks && !@add_clients && !@del_clients && !@del_networks && !%existing_subnets) {
+    die "Aucun sous-réseau défini et aucune modification demandée\n";
+}
+
+# Mettre à jour les interfaces
+if (%existing_subnets) {
+    my @all_networks = map { $_->{"subnet"} } values %existing_subnets;
+    $config->{"Dhcp4"}->{"interfaces-config"} = {
+        "interfaces" => [ get_network_interfaces(@all_networks) ]
+    };
+} else {
+    $config->{"Dhcp4"}->{"interfaces-config"} = {
+        "interfaces" => []
+    };
+}
+
+# Mettre à jour la base de données de leases
+$config->{"Dhcp4"}->{"lease-database"} = {
+    "type" => "memfile",
+    "persist" => JSON::PP::true,
+    "name" => "/var/lib/kea/dhcp4.leases"
+};
+
+# Mettre à jour ou ajouter les classes de clients
+my @client_classes = (
+    {
+        "name" => "IA32_UEFI",
+        "test" => "option[93].hex == 0x0006",
+        "option-data" => [
+            {
+                "name" => "boot-file-name",
+                "code" => 67,
+                "space" => "dhcp4",
+                "data" => "bootia32.efi"
+            }
+        ]
+    },
+    {
+        "name" => "X64_UEFI",
+        "test" => "option[93].hex == 0x0007",
+        "option-data" => [
+            {
+                "name" => "boot-file-name",
+                "code" => 67,
+                "space" => "dhcp4",
+                "data" => "grubx64.efi"
+            }
+        ]
+    },
+    {
+        "name" => "ARM64_UEFI",
+        "test" => "option[93].hex == 0x000B",
+        "option-data" => [
+            {
+                "name" => "boot-file-name",
+                "code" => 67,
+                "space" => "dhcp4",
+                "data" => "grubaa64.efi"
+            }
+        ]
+    },
+    {
+        "name" => "PXE_LEGACY",
+        "test" => "option[93].hex == 0x0000",
+        "option-data" => [
+            {
+                "name" => "boot-file-name",
+                "code" => 67,
+                "space" => "dhcp4",
+                "data" => "pxelinux.0"
+            }
+        ]
+    }
+);
+
+# Préserver les classes existantes non gérées par le script
+my %existing_classes;
+if (exists $config->{"Dhcp4"}->{"client-classes"}) {
+    foreach my $class (@{$config->{"Dhcp4"}->{"client-classes"}}) {
+        next unless defined $class->{"name"};
+        $existing_classes{$class->{"name"}} = $class unless grep { defined $_->{"name"} && $_->{"name"} eq $class->{"name"} } @client_classes;
+    }
+}
+$config->{"Dhcp4"}->{"client-classes"} = [
+    @client_classes,
+    values %existing_classes
+];
+
+# Mettre à jour les définitions d'options
+my @option_def = (
+    {
+        "name" => "image-server",
+        "code" => 200,
+        "type" => "ipv4-address",
+        "space" => "dhcp4"
+    },
+    ($log_server ? {
+        "name" => "log-server",
+        "code" => 199,
+        "type" => valid_ip($log_server) ? "ipv4-address" : "string",
+        "space" => "dhcp4"
+    } : ()),
+    ($log_server_port ? {
+        "name" => "log-server-port",
+        "code" => 201,
+        "type" => "uint16",
+        "space" => "dhcp4"
+    } : ()),
+    (defined $ssh_download_url ? {
+        "name" => "ssh-download-url",
+        "code" => 202,
+        "type" => "string",
+        "space" => "dhcp4"
+    } : ()),
+    (defined $flamethrower_port_base ? {
+        "name" => "flamethrower-port-base",
+        "code" => 203,
+        "type" => "uint16",
+        "space" => "dhcp4"
+    } : ()),
+    ($staging_dir ? {
+        "name" => "staging-dir",
+        "code" => 204,
+        "type" => "string",
+        "space" => "dhcp4"
+    } : ())
+);
+
+# Préserver les définitions d'options existantes non gérées par le script
+my %existing_option_def;
+if (exists $config->{"Dhcp4"}->{"option-def"}) {
+    foreach my $def (@{$config->{"Dhcp4"}->{"option-def"}}) {
+        next unless defined $def->{"name"};
+        $existing_option_def{$def->{"name"}} = $def unless grep { defined $_->{"name"} && $_->{"name"} eq $def->{"name"} } @option_def;
+    }
+}
+$config->{"Dhcp4"}->{"option-def"} = [
+    @option_def,
+    values %existing_option_def
+];
+
+# Mettre à jour les données d'options
+my @option_data = (
+    ($dns_domain ? { 
+        "name" => "domain-name", 
+        "code" => 15,
+        "space" => "dhcp4",
+        "data" => $dns_domain 
+    } : ()),
+    (@dns_servers ? { 
+        "name" => "domain-name-servers", 
+        "code" => 6,
+        "space" => "dhcp4",
+        "data" => join(',', @dns_servers) 
+    } : ()),
+    { 
+        "name" => "boot-file-name", 
+        "code" => 67,
+        "space" => "dhcp4",
+        "data" => "pxelinux.0" 
+    },
+    { 
+        "name" => "tftp-server-name", 
+        "code" => 66,
+        "space" => "dhcp4",
+        "data" => $boot_server 
+    },
+    { 
+        "name" => "image-server", 
+        "space" => "dhcp4",
+        "data" => $image_server 
+    },
+    ($log_server ? { 
+        "name" => "log-server", 
+        "space" => "dhcp4",
+        "data" => $log_server 
+    } : ()),
+    ($log_server_port ? { 
+        "name" => "log-server-port", 
+        "space" => "dhcp4",
+        "data" => "$log_server_port" 
+    } : ()),
+    (defined $ssh_download_url ? { 
+        "name" => "ssh-download-url", 
+        "space" => "dhcp4",
+        "data" => $ssh_download_url 
+    } : ()),
+    (defined $flamethrower_port_base ? { 
+        "name" => "flamethrower-port-base", 
+        "space" => "dhcp4",
+        "data" => "$flamethrower_port_base" 
+    } : ()),
+    ($staging_dir ? { 
+        "name" => "staging-dir", 
+        "space" => "dhcp4",
+        "data" => $staging_dir 
+    } : ())
+);
+
+# Préserver les options existantes non gérées par le script
+my %existing_option_data;
+if (exists $config->{"Dhcp4"}->{"option-data"}) {
+    foreach my $opt (@{$config->{"Dhcp4"}->{"option-data"}}) {
+        next unless defined $opt->{"name"};
+        $existing_option_data{$opt->{"name"}} = $opt unless grep { defined $_->{"name"} && $_->{"name"} eq $opt->{"name"} } @option_data;
+    }
+}
+$config->{"Dhcp4"}->{"option-data"} = [
+    @option_data,
+    values %existing_option_data
+];
+
+# Mettre à jour la configuration
+$config->{"Dhcp4"}->{"subnet4"} = [ values %existing_subnets ];
+
+# Écrire la configuration si des modifications ont été demandées
+if ($has_modifications) {
+    write_config($config);
+}
+
+# Fonction pour supprimer récursivement les clés "comment"
+sub remove_comments {
+    my ($data) = @_;
+    if (ref($data) eq 'HASH') {
+        delete $data->{"comment"};
+        delete $data->{"target_subnet"}; # Supprimer la clé temporaire
+        remove_comments($_) for values %$data;
+    } elsif (ref($data) eq 'ARRAY') {
+        remove_comments($_) for @$data;
+    }
+}
+
+# Écriture du fichier de configuration
+sub write_config {
+    my ($config) = @_;
+
+    # Stocker les commentaires avant de supprimer les clés "comment"
+    my %subnet_comments;
+    my %pool_comments;
+    my %reservation_comments;
+
+    # Collecter les commentaires des sous-réseaux et réservations imbriquées
+    if (exists $config->{"Dhcp4"}->{"subnet4"}) {
+        foreach my $subnet (@{$config->{"Dhcp4"}->{"subnet4"}}) {
+            if (exists $subnet->{"comment"}) {
+                print "DEBUG: Commentaire pour subnet $subnet->{subnet}: $subnet->{comment}\n" if $debug;
+                $subnet_comments{$subnet->{"subnet"}} = $subnet->{"comment"};
+            } else {
+                print "DEBUG: Aucun commentaire trouvé pour subnet $subnet->{subnet}\n" if $debug;
+            }
+            if (exists $subnet->{"pools"}) {
+                foreach my $pool (@{$subnet->{"pools"}}) {
+                    if (exists $pool->{"comment"}) {
+                        print "DEBUG: Commentaire pour pool $subnet->{subnet}|$pool->{pool}: $pool->{comment}\n" if $debug;
+                        $pool_comments{$subnet->{"subnet"} . "|" . $pool->{"pool"}} = $pool->{"comment"};
+                    } else {
+                        print "DEBUG: Aucun commentaire trouvé pour pool $subnet->{subnet}|$pool->{pool}\n" if $debug;
+                    }
+                }
+            }
+            if (exists $subnet->{"reservations"}) {
+                foreach my $reservation (@{$subnet->{"reservations"}}) {
+                    if (exists $reservation->{"comment"}) {
+                        print "DEBUG: Commentaire pour réservation $subnet->{subnet}|$reservation->{'ip-address'}: $reservation->{comment}\n" if $debug;
+                        $reservation_comments{$subnet->{"subnet"} . "|" . $reservation->{'ip-address'}} = $reservation->{"comment"};
+                    } else {
+                        print "DEBUG: Aucun commentaire trouvé pour réservation $subnet->{subnet}|$reservation->{'ip-address'}\n" if $debug;
+                    }
+                }
+            }
+        }
+    }
+
+    # Collecter les commentaires des réservations globales
+    if (exists $config->{"Dhcp4"}->{"reservations"}) {
+        foreach my $reservation (@{$config->{"Dhcp4"}->{"reservations"}}) {
+            if (exists $reservation->{"comment"}) {
+                print "DEBUG: Commentaire pour réservation globale $reservation->{'ip-address'}: $reservation->{'comment'}\n" if $debug;
+                $reservation_comments{"global|" . $reservation->{'ip-address'}} = $reservation->{'comment'};
+            } else {
+                print "DEBUG: Aucun commentaire trouvé pour réservation globale $reservation->{'ip-address'}\n" if $debug;
+            }
+        }
+    }
+
+    # Supprimer toutes les clés "comment" et "target_subnet" de la structure
+    remove_comments($config);
+
+    # Encoder la configuration sans les commentaires
+    my $json = JSON::PP->new->pretty;
+    my $json_text = $json->encode($config);
+    my @lines = split("\n", $json_text);
+    my @output;
+
+    # Ajouter l'en-tête généré
+    push @output, "//";
+    push @output, "// This is a Kea DHCPv4 server configuration file generated by si_mkdhcpserver on " . localtime();
+    push @output, "// You can tune it, but it is not guaranteed that your comments are kept upon next use of si_mkdhcpserver";
+    push @output, "//";
+    push @output, "";
+
+    # Réinsérer les commentaires spécifiques pour les sous-réseaux, pools et réservations
+    my $in_object = 0;
+    my $object_depth = 0;
+    my $current_subnet;
+    foreach my $line (@lines) {
+        print "DEBUG: Traitement de la ligne: $line\n" if $debug;
+
+        # Ajuster l'indentation pour les commentaires
+        my $indent = ($line =~ /^(\s*)/) ? $1 : "";
+        my $comment_indent = $indent;
+
+        if ($line =~ /\{/) {
+            $object_depth++;
+            $in_object = 1;
+        } elsif ($line =~ /\}/) {
+            $object_depth--;
+            $in_object = 0 if $object_depth == 0;
+            $current_subnet = undef if $object_depth <= 2;
+        }
+
+        push @output, $line;
+
+        # Insérer les commentaires pour les sous-réseaux
+        if ($line =~ /"subnet"\s*:\s*"([^"]+)"/) {
+            $current_subnet = $1;
+            print "DEBUG: Détection de subnet: $current_subnet\n" if $debug;
+            if (exists $subnet_comments{$current_subnet}) {
+                push @output, "$comment_indent// $subnet_comments{$current_subnet}";
+                print "DEBUG: Insertion du commentaire pour subnet $current_subnet: $subnet_comments{$current_subnet}\n" if $debug;
+            } else {
+                print "DEBUG: Aucun commentaire à insérer pour subnet $current_subnet\n" if $debug;
+            }
+        }
+        # Insérer les commentaires pour les pools
+        elsif ($current_subnet && $line =~ /"pool"\s*:\s*"([^"]+)"/) {
+            my $pool_key = $1;
+            my $key = "$current_subnet|$pool_key";
+            print "DEBUG: Détection de pool: $key\n" if $debug;
+            if (exists $pool_comments{$key}) {
+                push @output, "$comment_indent// $pool_comments{$key}";
+                print "DEBUG: Insertion du commentaire pour pool $key: $pool_comments{$key}\n" if $debug;
+            } else {
+                print "DEBUG: Aucun commentaire à insérer pour pool $key\n" if $debug;
+            }
+        }
+        # Insérer les commentaires pour les réservations
+        elsif ($line =~ /"ip-address"\s*:\s*"([^"]+)"/) {
+            my $ip = $1;
+            my $key = defined $current_subnet ? "$current_subnet|$ip" : "global|$ip";
+            print "DEBUG: Détection de réservation: $key\n" if $debug;
+            if (exists $reservation_comments{$key}) {
+                push @output, "$comment_indent// $reservation_comments{$key}";
+                print "DEBUG: Insertion du commentaire pour réservation $key: $reservation_comments{$key}\n" if $debug;
+            } else {
+                print "DEBUG: Aucun commentaire à insérer pour réservation $key\n" if $debug;
+            }
+        }
+    }
+
+    # Écrire le fichier de configuration
+    $json_text = join("\n", @output) . "\n";
+    open my $fh, '>', '/etc/kea/kea-dhcp4.conf' or die "Impossible d'écrire le fichier de configuration: $!\n";
+    print $fh $json_text;
+    close $fh;
+    print "Fichier de configuration généré: /etc/kea/kea-dhcp4.conf\n";
+}
+
+# Fonctions utilitaires
+sub print_usage {
+    print <<'EOF';
+Usage: si_mkdhcpserver [options]
+Options:
+  --dns-domain <domain>           Domaine DNS (par défaut: /etc/resolv.conf)
+  --dns-servers <servers>         Liste de serveurs DNS (séparés par des espaces)
+  --add-network <ip/mask> [<ip_debut> <ip_fin>]  Ajoute ou met à jour un réseau
+  --del-network <ip/mask> [--force]  Supprime un réseau
+  --image-server <ip|fqdn>        Serveur d'image (par défaut: IP locale)
+  --boot-server <ip|fqdn>         Serveur de boot (par défaut: IP locale)
+  --log-server <ip|fqdn>          Adresse du serveur de logs
+  --log-server-port <port>        Port du serveur de logs (1-65535)
+  --ssh-download-url [<url>]      URL pour téléchargement SSH
+  --flamethrower-port-base [<port>] Port de base pour Flamethrower (par défaut: 8000)
+  --staging-dir <path>            Répertoire temporaire pour staging
+  --add-client <nom> <MAC> <IP> [--global]  Ajoute une réservation (globale si --global)
+  --del-client <nom|MAC|IP>       Supprime des réservations (support des wildcards *)
+  --list-clients [--csv]          Liste les réservations
+  --list-pools [--csv]            Liste les pools
+  --list-subnets [--csv]          Liste les sous-réseaux
+  --debug                         Active les messages de débogage
+  --help                          Affiche cette aide
+EOF
+}
+
+sub get_local_ip {
+    my (@add_networks, $config) = @_;
+    my @available_networks;
+    foreach my $i (0 .. $#add_networks / 3) {
+        push @available_networks, $add_networks[$i*3];
+    }
+    if (exists $config->{"Dhcp4"}->{"subnet4"}) {
+        foreach my $subnet (@{$config->{"Dhcp4"}->{"subnet4"}}) {
+            my $net = $subnet->{"subnet"};
+            next unless defined $net && $net =~ m|^(\d+\.\d+\.\d+\.\d+)/(\d+)$|;
+            push @available_networks, $net;
+        }
+    }
+
+    if (@available_networks) {
+        open my $ip_addr, '-|', 'ip -4 addr show' or die "Impossible d'exécuter ip addr: $!\n";
+        while (my $line = <$ip_addr>) {
+            chomp $line;
+            if ($line =~ /inet\s+(\d+\.\d+\.\d+\.\d+)\/(\d+)/) {
+                my ($ip, $mask) = ($1, $2);
+                print "DEBUG: IP locale trouvée: $ip/$mask\n" if $debug;
+                foreach my $net (@available_networks) {
+                    my ($net_ip, $net_mask) = split('/', $net);
+                    unless (defined $net_ip && defined $net_mask) {
+                        warn "DEBUG: Réseau mal formé dans get_local_ip: $net\n" if $debug;
+                        next;
+                    }
+                    print "DEBUG: Vérification si $ip/$mask est dans $net_ip/$net_mask\n" if $debug;
+                    if (is_ip_in_network($ip, $mask, $net_ip, $net_mask)) {
+                        close $ip_addr;
+                        return $ip;
+                    }
+                }
+            }
+        }
+        close $ip_addr;
+    }
+
+    print "DEBUG: Aucun réseau correspondant trouvé, utilisation du fallback\n" if $debug;
+    my $socket = IO::Socket::INET->new(
+        Proto    => 'udp',
+        PeerAddr => '8.8.8.8',
+        PeerPort => 53
+    ) or die "Impossible de déterminer l'IP locale: $!\n";
+    my $ip = inet_ntoa($socket->sockaddr);
+    $socket->close;
+    return $ip;
+}
+
+sub valid_ip {
+    my ($ip) = @_;
+    return 0 unless $ip =~ /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+    return 0 if $1 > 255 || $2 > 255 || $3 > 255 || $4 > 255;
+    return 1;
+}
+
+sub valid_fqdn {
+    my ($fqdn) = @_;
+    return $fqdn =~ /^[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]$/;
+}
+
+sub ip_to_int {
+    my ($ip) = @_;
+    return 0 unless valid_ip($ip);
+    my @octets = split(/\./, $ip);
+    return ($octets[0] << 24) + ($octets[1] << 16) + ($octets[2] << 8) + $octets[3];
+}
+
+sub first_usable_ip {
+    my ($ip, $mask) = @_;
+    my $net_int = ip_to_int($ip);
+    my $mask_int = (2 ** 32) - (2 ** (32 - $mask));
+    my $first_ip = ($net_int & $mask_int) + 1;
+    my @octets;
+    for my $i (3, 2, 1, 0) {
+        $octets[$i] = $first_ip & 255;
+        $first_ip >>= 8;
+    }
+    return join('.', @octets);
+}
+
+sub is_ip_in_network {
+    my ($ip, $ip_mask, $net_ip, $net_mask) = @_;
+    return 0 unless valid_ip($ip) && valid_ip($net_ip);
+    return 0 unless $ip_mask =~ /^\d+$/ && $ip_mask >= 0 && $ip_mask <= 32;
+    return 0 unless $net_mask =~ /^\d+$/ && $net_mask >= 0 && $net_mask <= 32;
+    my $ip_int = ip_to_int($ip);
+    my $net_int = ip_to_int($net_ip);
+    my $mask_int = (2 ** 32) - (2 ** (32 - $net_mask));
+    return ($ip_int & $mask_int) == ($net_int & $mask_int);
+}
+
+sub is_ip_in_range {
+    my ($ip, $start, $end) = @_;
+    my $ip_int = ip_to_int($ip);
+    my $start_int = ip_to_int($start);
+    my $end_int = ip_to_int($end);
+    return $ip_int >= $start_int && $ip_int <= $end_int;
+}
+
+sub get_network_interfaces {
+    my (@networks) = @_;
+    my %interfaces;
+    open my $ip_addr, '-|', 'ip -4 addr show' or die "Impossible d'exécuter ip addr: $!\n";
+    while (my $line = <$ip_addr>) {
+        chomp $line;
+        if ($line =~ /inet\s+(\d+\.\d+\.\d+\.\d+)\/(\d+)\s+.*\s+(\S+)$/) {
+            my ($ip, $mask, $iface) = ($1, $2, $3);
+            print "DEBUG: Interface trouvée: $iface pour $ip/$mask\n" if $debug;
+            foreach my $net (@networks) {
+                my ($net_ip, $net_mask) = split('/', $net);
+                next unless defined $net_ip && defined $net_mask;
+                if (is_ip_in_network($ip, $mask, $net_ip, $net_mask)) {
+                    push @{$interfaces{$net}}, $iface;
+                    print "DEBUG: Interface $iface associée au réseau $net\n" if $debug;
+                }
+            }
+        }
+    }
+    close $ip_addr;
+    return map { @{$interfaces{$_} || []} } @networks;
+}
+
+sub get_subnet_ip_range {
+    my ($ip, $mask) = @_;
+    my $net_int = ip_to_int($ip);
+    my $mask_int = (2 ** 32) - (2 ** (32 - $mask));
+    my $ip_min = $net_int & $mask_int;
+    my $ip_max = $ip_min + (2 ** (32 - $mask)) - 1;
+    my @min_octets;
+    my @max_octets;
+    my $temp_min = $ip_min;
+    my $temp_max = $ip_max;
+    for my $i (3, 2, 1, 0) {
+        $min_octets[$i] = $temp_min & 255;
+        $max_octets[$i] = $temp_max & 255;
+        $temp_min >>= 8;
+        $temp_max >>= 8;
+    }
+    return (join('.', @min_octets), join('.', @max_octets));
+}
+
+sub is_range_overlap {
+    my ($start1, $end1, $start2, $end2) = @_;
+    my $start1_int = ip_to_int($start1);
+    my $end1_int = ip_to_int($end1);
+    my $start2_int = ip_to_int($start2);
+    my $end2_int = ip_to_int($end2);
+    my $is_included = ($start1_int >= $start2_int && $end1_int <= $end2_int) || ($start2_int >= $start1_int && $end2_int <= $end1_int);
+    my $is_partial_overlap = ($start1_int <= $end2_int && $end1_int >= $start2_int) && !$is_included;
+    return ($is_included, $is_partial_overlap);
+}
+
+__END__
+
+=encoding utf8
+
+=head1 NAME
+
+si_mkdhcpserver - Génère un fichier de configuration pour le serveur Kea DHCPv4
+
+=head1 SYNOPSIS
+
+si_mkdhcpserver [options]
+
+=head1 DESCRIPTION
+
+Le script C<si_mkdhcpserver> génère un fichier de configuration JSON pour le serveur Kea DHCPv4, enregistré dans F</etc/kea/kea-dhcp4.conf>. Il permet de configurer des sous-réseaux, des pools, des réservations de clients, et des options DHCP spécifiques. Le script prend en charge l'ajout, la suppression et la mise à jour de sous-réseaux et de réservations, ainsi que l'affichage des informations de configuration existantes. La version 0.8.1 inclut des améliorations pour la gestion des réservations, la détection des interfaces réseau, et la robustesse du parsing JSON.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<--dns-domain> <domain>
+
+Spécifie le domaine DNS à utiliser pour les clients DHCP. Par défaut, le domaine est extrait de F</etc/resolv.conf> (champ C<domain>).
+
+=item B<--dns-servers> <servers>
+
+Liste des serveurs DNS (IP ou FQDN) séparés par des espaces. Les adresses doivent être valides (IPv4 ou noms de domaine valides).
+
+=item B<--add-network> <ip/mask> [<ip_debut> <ip_fin>]
+
+Ajoute ou met à jour un sous-réseau avec l'adresse réseau et le masque spécifiés (format C<xxx.xxx.xxx.xxx/n>). Si C<ip_debut> et C<ip_fin> sont fournis, un pool DHCP est défini pour ce sous-réseau. Le script vérifie que :
+- L'adresse IP et le masque sont valides.
+- Les adresses de début et de fin du pool sont dans le sous-réseau et cohérentes (C<ip_debut> ≤ C<ip_fin>).
+- Le pool ne chevauche pas partiellement un pool existant dans le même sous-réseau.
+- Le pool n'inclut pas d'adresses déjà réservées dans les réservations globales.
+
+Un identifiant unique est assigné au sous-réseau (ou conservé s'il existe déjà), et un commentaire est ajouté avec la date de création/modification.
+
+=item B<--del-network> <ip/mask> [--force]
+
+Supprime un sous-réseau spécifié par son adresse réseau et son masque. Si le sous-réseau contient des réservations, l'opération échoue sauf si l'option C<--force> est utilisée, auquel cas les réservations globales correspondantes au sous-réseau sont également supprimées.
+
+=item B<--image-server> <ip|fqdn>
+
+Adresse du serveur d'image (IP ou FQDN). Par défaut, utilise l'adresse IP locale détectée. Si spécifié, une option DHCP personnalisée (code 200) est ajoutée.
+
+=item B<--boot-server> <ip|fqdn>
+
+Adresse du serveur de démarrage (IP ou FQDN). Par défaut, utilise l'adresse IP locale détectée.
+
+=item B<--log-server> <ip|fqdn>
+
+Adresse du serveur de logs (IP ou FQDN). Si spécifié, une option DHCP personnalisée (code 199) est ajoutée.
+
+=item B<--log-server-port> <port>
+
+Port du serveur de logs (entier entre 1 et 65535). Si spécifié, une option DHCP personnalisée (code 201) est ajoutée.
+
+=item B<--ssh-download-url> [<url>]
+
+URL pour le téléchargement SSH des images. Si spécifié sans argument, utilise C<ssh://<image-server>/var/lib/systemimager/images>. Ajoute une option DHCP personnalisée (code 202).
+
+=item B<--flamethrower-port-base> [<port>]
+
+Port de base pour Flamethrower. Si spécifié sans argument, utilise 8000. Ajoute une option DHCP personnalisée (code 203).
+
+=item B<--staging-dir> <path>
+
+Répertoire temporaire pour le staging. Ajoute une option DHCP personnalisée (code 204).
+
+=item B<--add-client> <nom> <MAC> <IP> [--global]
+
+Ajoute une réservation pour un client avec le nom d'hôte, l'adresse MAC, et l'adresse IP spécifiés. Le script vérifie que :
+- Le nom d'hôte est valide (caractères alphanumériques, points, tirets, sans commencer/finir par un point ou tiret).
+- L'adresse MAC est au format C<XX:XX:XX:XX:XX:XX> (hexadécimal).
+- L'adresse IP est valide (IPv4).
+- Le nom, la MAC, et l'IP sont uniques dans toute la configuration (sous-réseaux et réservations globales).
+- Sans l'option C<--global>, l'IP doit appartenir à un sous-réseau défini dans la configuration.
+
+Si l'IP correspond à un sous-réseau et que C<--global> n'est pas utilisé, la réservation est placée dans ce sous-réseau. Sinon, avec C<--global>, la réservation est ajoutée globalement sous C<"Dhcp4" -> "reservations">. Un commentaire est ajouté avec la date et l'emplacement de la réservation.
+
+=item B<--del-client> <nom|MAC|IP>
+
+Supprime les réservations correspondant au critère spécifié (nom d'hôte, adresse MAC, ou adresse IP). Supporte les wildcards (par exemple, C<client*>). Supprime les réservations dans les sous-réseaux et globalement.
+
+=item B<--list-clients> [--csv]
+
+Liste les réservations avec les colonnes : subnet, subnet-id, net-interface, fqdn, MAC, IP. Format pretty print (tableau) par défaut ou CSV avec C<--csv>. La colonne C<net-interface> affiche l'interface réseau correspondant au sous-réseau (détectée via C<ip -4 addr show>) ou "N/A" si aucune interface ne correspond. Les réservations globales affichent "global" dans la colonne subnet et "N/A" pour subnet-id et net-interface.
+
+=item B<--list-pools> [--csv]
+
+Liste les pools avec les colonnes : subnet, subnet-id, net-interface, pool-start, pool-end. Format pretty print (tableau) par défaut ou CSV avec C<--csv>. La colonne net-interface affiche l'interface réseau correspondant au sous-réseau ou "N/A" si aucune interface ne correspond.
+
+=item B<--list-subnets> [--csv]
+
+Liste les sous-réseaux avec les colonnes : subnet, subnet-id, ip-min, ip-max. Format pretty print (tableau) par défaut ou CSV avec C<--csv>. Les colonnes ip-min et ip-max indiquent respectivement l'adresse réseau et l'adresse de broadcast du sous-réseau, calculées à partir de l'adresse IP et du masque.
+
+=item B<--debug>
+
+Active les messages de débogage, affichant des informations détaillées sur le parsing du fichier de configuration, la détection des interfaces réseau, la gestion des commentaires, et les décisions prises par le script.
+
+=item B<--help>
+
+Affiche l'aide et termine le script.
+
+=back
+
+=head1 NOTES
+
+- Les interfaces réseau sont détectées automatiquement via la commande C<ip -4 addr show> pour associer chaque sous-réseau à une interface locale. Si aucune interface ne correspond à un sous-réseau (par exemple, si l'adresse IP du sous-réseau n'est pas configurée localement), la colonne C<net-interface> affiche "N/A" dans les sorties C<--list-clients>, C<--list-pools>, et C<--list-subnets>.
+- Les réservations ajoutées via C<--add-client <nom> <MAC> <IP>> sont placées automatiquement dans le sous-réseau correspondant à l'adresse IP fournie, en vérifiant si l'IP appartient à un sous-réseau défini dans C<$config->{"Dhcp4"}->{"subnet4"}>. Si aucun sous-réseau ne correspond, une erreur est signalée, sauf si l'option C<--global> est spécifiée, auquel cas la réservation est ajoutée dans C<"Dhcp4" -> "reservations">. Le nom d'hôte, l'adresse MAC, et l'adresse IP doivent être B<uniques dans l'ensemble de la configuration> (sous-réseaux et réservations globales). Le nom d'hôte doit être valide (caractères alphanumériques, points, et tirets, sans commencer ni finir par un point ou tiret). L'adresse MAC doit être au format C<XX:XX:XX:XX:XX:XX> (hexadécimal). L'adresse IP doit être valide et, sans C<--global>, appartenir à un sous-réseau défini.
+- Les options C<--list-clients>, C<--list-pools>, et C<--list-subnets> affichent respectivement les réservations, les pools, et les sous-réseaux présents dans la configuration. Par défaut, elles utilisent un format "pretty print" (tableau clair généré avec le module Perl C<Text::Table>). Avec l'option C<--csv>, la sortie est au format CSV avec les colonnes suivantes :
+  - C<--list-clients> : subnet, subnet-id, net-interface, fqdn, MAC, IP
+  - C<--list-pools> : subnet, subnet-id, net-interface, pool-start, pool-end
+  - C<--list-subnets> : subnet, subnet-id, ip-min, ip-max
+  Ces options ne modifient pas le fichier de configuration sauf si des options de modification (comme C<--add-network>, C<--del-network>, C<--add-client>, ou C<--del-client>) sont également présentes. Dans ce cas, les modifications sont appliquées en dernier, et les listes affichées reflètent l'état final de la configuration après ces modifications. Par exemple, lister les clients après avoir ajouté une réservation montrera la nouvelle réservation dans le sous-réseau approprié.
+- Les commentaires dans le fichier de configuration sont préservés pour les sous-réseaux, les pools, et les réservations. Les nouveaux sous-réseaux, pools, ou réservations ajoutés par le script incluent un commentaire indiquant la date et l'heure de l'ajout (par exemple, "Subnet-1 192.168.1.0/24 added on [date]" ou "Reservation for client1 in subnet 192.168.1.0/24 added on [date]"). Les réservations globales ont un commentaire du type "Global reservation for client1 (MAC, IP) added on [date]". Les commentaires existants non associés à une entrée spécifique (sous-réseau, pool, ou réservation) peuvent être perdus lors de la réécriture du fichier.
+- Le script vérifie la validité des adresses IP (format C<xxx.xxx.xxx.xxx>), des masques de sous-réseau (0 à 32), des adresses MAC (format hexadécimal), et des FQDN (noms de domaine valides). Les erreurs sont signalées avec des messages clairs, et le script s'arrête si une erreur critique est détectée (par exemple, IP invalide, conflit de pool, fichier de configuration non accessible, ou doublon dans les réservations).
+- B<Unicité des réservations> : Le script vérifie désormais que chaque réservation (nom d'hôte, adresse MAC, ou adresse IP) est unique dans toute la configuration, y compris les réservations globales et celles dans les sous-réseaux. Une tentative d'ajouter une réservation avec un nom, une MAC, ou une IP déjà utilisée (que ce soit dans un sous-réseau ou globalement) entraîne une erreur indiquant l'emplacement du doublon (par exemple, "subnet 192.168.1.0/24" ou "global").
+- B<Gestion des erreurs de parsing> : Les pools ou réservations trouvés hors d'un contexte de sous-réseau valide dans le fichier JSON sont ignorés pour éviter des erreurs comme "Use of uninitialized value $current_subnet". Des messages de débogage sont affichés en mode C<--debug> pour signaler ces cas.
+- Le fichier de configuration généré est écrit dans F</etc/kea/kea-dhcp4.conf>. Le répertoire F</etc/kea> doit exister et être accessible en écriture si le fichier n'existe pas encore. Si des modifications sont demandées, le script vérifie que le fichier est accessible en écriture avant de procéder.
+- Si aucune modification n'est demandée (par exemple, C<--add-network>, C<--del-network>, C<--add-client>, ou C<--del-client>) et qu'aucun sous-réseau n'existe après traitement (par exemple, après suppression de tous les sous-réseaux), le script s'arrête avec une erreur, sauf si une option de listage (C<--list-*>) est utilisée, auquel cas il affiche les informations demandées et sort sans erreur.
+- Le mode débogage (C<--debug>) affiche des informations détaillées sur le processus de parsing du fichier de configuration, la détection des interfaces réseau, la gestion des commentaires, et les décisions prises par le script, y compris la correspondance des adresses IP avec les sous-réseaux pour les réservations.
+- Les réservations globales (définies directement sous C<"Dhcp4" -> "reservations">) sont supportées et affichées dans C<--list-clients> avec "global" dans la colonne subnet et "N/A" pour subnet-id et net-interface. Les réservations dans les sous-réseaux sont associées à leur sous-réseau respectif, avec l'interface réseau correspondante ou "N/A".
+- Les options C<--list-subnets> calculent C<ip-min> (adresse réseau) et C<ip-max> (adresse de broadcast) pour chaque sous-réseau en fonction de l'adresse IP et du masque, en utilisant la fonction C<get_subnet_ip_range>.
+
+=head1 EXIT STATUS
+
+=over 4
+
+=item B<0> Succès, y compris pour les options de listage (C<--list-*>) même si aucune donnée n'est trouvée.
+
+=item B<1> Erreur, par exemple : fichier de configuration non accessible, paramètres invalides, conflits dans les pools ou réservations, ou absence de sous-réseaux sans modification demandée.
+
+=back
+
+=head1 DEPENDENCIES
+
+Modules Perl nécessaires :
+- C<Getopt::Long>
+- C<Socket>
+- C<IO::Socket::INET>
+- C<JSON::PP>
+- C<File::Spec>
+- C<Text::Table> (pour les sorties en format tableau)
+
+Commandes externes :
+- C<ip> (pour C<ip -4 addr show> afin de détecter les interfaces réseau)
+- C<kea-dhcp4> (avertissement si non installé, mais non requis pour générer la configuration)
+
+=head1 FILES
+
+=over 4
+
+=item F</etc/kea/kea-dhcp4.conf>
+
+Fichier de configuration généré pour Kea DHCPv4.
+
+=item F</var/lib/kea/dhcp4.leases>
+
+Fichier de leases utilisé par Kea DHCPv4 (spécifié dans la configuration).
+
+=item F</etc/resolv.conf>
+
+Utilisé pour extraire le domaine DNS par défaut si C<--dns-domain> n'est pas spécifié.
+
+=back
+
+=head1 BUGS
+
+Signalez les bugs à l'équipe SystemImager ou ouvrez une issue sur le dépôt du projet. Problèmes connus :
+- Les commentaires non associés à un sous-réseau, un pool, ou une réservation (par exemple, commentaires flottants dans le fichier JSON) peuvent être perdus lors de la réécriture du fichier.
+- Les sous-réseaux mal formés dans la configuration existante (par exemple, format IP/masque incorrect) sont ignorés pour éviter les erreurs, ce qui peut entraîner une perte de données si la configuration manuelle est incorrecte.
+- Les interfaces réseau sont détectées en fonction des adresses IP locales via C<ip -4 addr show>. Si aucune interface ne correspond à un sous-réseau, la colonne C<net-interface> affiche "N/A", ce qui peut nécessiter une vérification manuelle si une interface est attendue.
+
+B<Problèmes résolus dans la version 0.8.1> :
+- Une erreur potentielle de type "Use of uninitialized value $current_subnet" lors du parsing du fichier JSON a été corrigée en ignorant les pools ou réservations hors contexte de sous-réseau et en ajoutant des vérifications explicites pour C<$current_subnet>.
+- Les réservations ne sont plus autorisées à être dupliquées entre les sous-réseaux et les réservations globales. Le script vérifie désormais l'unicité du nom d'hôte, de l'adresse MAC, et de l'adresse IP dans toute la configuration avant d'ajouter une nouvelle réservation.
+
+=head1 AUTHOR
+
+Équipe SystemImager
+
+=head1 SEE ALSO
+
+kea-dhcp4(8), kea-ctrl-agent(8), systemimager(1)
+
+=cut

@@ -1176,6 +1176,11 @@ fi
 %attr(0755, root, root) %{_exec_prefix}/lib/systemimager/clients-statuses-helper
 
 %changelog
+* Fri Aug 29 2025 Olivier Lahaye <olivier.lahaye@cea.fr> 4.9.1-0.5
+- Migrate to Kea DHCP server
+- dhcp options are now used in range 200 to 204
+- new si_mkdhcpserver for kea-dhcp4.conf creation / management
+
 * Fri Jul 18 2025 Olivier Lahaye <olivier.lahaye@cea.fr> 4.9.1-0.4
 - Add support for bittorent using transmission
 - Fix warnings in specfile

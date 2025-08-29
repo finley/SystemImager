@@ -118,14 +118,20 @@ then
 	#
 	# Originally we assumed the DHCP server was the imageserver, then we started
 	# using option-100 (turns out option-100 is reserved for "printer name"),
-	# now we use option-140 (reserved for "private use").  The following 
+    # then we used option-140 (reserved for "private use"), but it also turns out
+	# option-140 is also reserved.
+    # now we use option-200 (reserved for "private use").  The following 
 	# funkification is for backwards compatibility with servers using older 
-	# dhcp.conf files. -BEF-
-	#
+	# dhcp.conf files. -BEF- -OL-
+
+	# Read image server from DHCP response option 200 (or option 140 or 100) or from DHCP response source IP
 	if [ -z "$IMAGESERVER" ]; then
-	    if [ -n "$new_option_140" ]; then
-        	IMAGESERVER=$new_option_140
-		loginfo "Got IMAGESERVER=${new_option_140} (from option-140)"
+	    if [ -n "$new_option_200" ]; then
+        	IMAGESERVER=$new_option_200
+		loginfo "Got IMAGESERVER=${new_option_200} (from option-200)"
+	    elif [ -n "$new_option_140" ]; then
+	        IMAGESERVER=$new_option_140
+        	logwarn "Got IMAGESERVER=${new_option_140} (from option-140. DEPRECATED!)"
 	    elif [ -n "$new_option_100" ]; then
 	        IMAGESERVER=$new_option_100
         	logwarn "Got IMAGESERVER=${new_option_100} (from option-100. VERY DEPRECATED!)"
@@ -138,14 +144,30 @@ then
 	    fi
 	fi
 
+	# Read log server from DHCP response
 	[ -z "$LOG_SERVER" ] && [ -n "$new_log_servers" ] && LOG_SERVER="$new_log_servers" && loginfo "Got LOG_SERVER=${new_log_servers}"
-	[ -z "$LOG_SERVER_PORT" ] && [ -n "$new_option_141" ] && LOG_SERVER_PORT="$new_option_141" && loginfo "Got LOG_SERVER_PORT=${new_option_141}"
-                                                        
+
+	# Read log server port from DHCP response option 201 (or 141)
+	[ -z "$LOG_SERVER_PORT" ] && [ -n "$new_option_141" ] && LOG_SERVER_PORT="$new_option_141" && logwarn "Got LOG_SERVER_PORT=${new_option_141} (DEPRECATED)"
+	[ -z "$LOG_SERVER_PORT" ] && [ -n "$new_option_201" ] && LOG_SERVER_PORT="$new_option_201" && loginfo "Got LOG_SERVER_PORT=${new_option_201}"
+
+	# Read IP address from DHCP response
 	[ -z "$IPADDR" ] && [ -n "$new_ip_address" ] && IPADDR="$new_ip_address" && loginfo "Got IPADDR=${new_ip_address}"
+
+	# Read subnetmask from DHCP respoinse
 	[ -z "$NETMASK" ] && [ -n "$new_subnet_mask" ] && NETMASK="$new_subnet_mask" && loginfo "Got NETMASK=${new_subnet_mask}"
+
+	# Read network number from DHCP response
 	[ -z "$NETWORK" ] && [ -n "$new_network_number" ] && NETWORK="$new_network_number" && loginfo "Got NETWORK=${new_network_number}"
+
+	# Read broadcast address from DHCP response
 	[ -z "$BROADCAST" ] && [ -n "$new_broadcast_address" ] && BROADCAST="$new_broadcast_address" && loginfo "Got BROADCAST=${new_broadcast_address}"
-	[ -z "$FLAMETHROWER_DIRECTORY_PORTBASE" ] && [ -n "$new_option_143" ] && FLAMETHROWER_DIRECTORY_PORTBASE="$new_option_143" && loginfo "Got FLAMETHROWER_DIRECTORY_PORTBASE=${new_option_143}"
+
+	# Read flamethrower directory port base from DHCP response option 203 (or 143)
+	[ -z "$FLAMETHROWER_DIRECTORY_PORTBASE" ] && [ -n "$new_option_143" ] && FLAMETHROWER_DIRECTORY_PORTBASE="$new_option_143" && logwarn "Got FLAMETHROWER_DIRECTORY_PORTBASE=${new_option_143} (DEPRECATED)"
+	[ -z "$FLAMETHROWER_DIRECTORY_PORTBASE" ] && [ -n "$new_option_203" ] && FLAMETHROWER_DIRECTORY_PORTBASE="$new_option_203" && loginfo "Got FLAMETHROWER_DIRECTORY_PORTBASE=${new_option_203}"
+
+	# Read tmpfs staging directory from DHCP response option 204 (or 144)
 	[ -z "$TMPFS_STAGING" ] && [ -n "$new_option_144" ] && TMPFS_STAGING="$new_option_144" && loginfo "Got TMPFS_STAGING=${new_option_144}"
 	[ -z "$GATEWAY" ] && [ -n "$new_routers" ] && GATEWAY="$new_routers" && loginfo "Got GATEWAY=${new_routers}"
 	[ -z "$GATEWAY_DEV" ] && [ -n "$DEVICE" ] && GATEWAYDEV="$DEVICE" && loginfo "Got GATEWAYDEV=${DEVICE}"
@@ -154,9 +176,12 @@ then
 	################################################################################
 	#
 	# Originally we used option-208 here, but pxelinux started using it too, so 
-	# we switched to using option-142.
+	# we switched to using option-142. (but it is also used, so now we use 202 -OL-)
 	#
-	[ -z "$SSH_DOWNLOAD_URL" ] && [ -n "$new_option_142" ] && SSH_DOWNLOAD_URL="$new_option_142" && loginfo "Got SSH_DOWNLOAD_URL=${new_option_142}"
+
+	# Read ssh download URL from DHCP response option 202 (or 142)
+	[ -z "$SSH_DOWNLOAD_URL" ] && [ -n "$new_option_142" ] && SSH_DOWNLOAD_URL="$new_option_142" && logwarn "Got SSH_DOWNLOAD_URL=${new_option_142}"
+	[ -z "$SSH_DOWNLOAD_URL" ] && [ -n "$new_option_202" ] && SSH_DOWNLOAD_URL="$new_option_202" && loginfo "Got SSH_DOWNLOAD_URL=${new_option_202}"
 
 	BOOTPROTO=dhcp # Remember we got network infos from DHCP
 	loginfo "Finished reading DHCP lease informations."

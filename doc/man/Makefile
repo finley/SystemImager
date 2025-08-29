@@ -3,9 +3,7 @@
 #
 #  Copyright (C) 2002 Hewlett-Packard Company <dannf@fc.hp.com>
 #  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
-#  Copyright (C) 2019 Olivier Lahaye <olivier.lahaye@cea.fr>
-#
-#    $Id$
+#  Copyright (C) 2019-2025 Olivier Lahaye <olivier.lahaye@cea.fr>
 #
 
 
@@ -22,27 +20,28 @@ SERVER_MAN = si_addclients.8 				\
 			si_mkautoinstallcd.8			\
 			si_mkautoinstallscript.8		\
 			si_mkdhcpserver.8				\
-			si_mkdhcpstatic.8				\
+			si_mkdhcpserver_legacy.8		\
+			si_mkdhcpstatic_legacy.8		\
 			si_cpimage.8					\
 			si_mvimage.8					\
 			si_rmimage.8					\
 			si_mkbootserver.8				\
-			si_lint.8			\
-			systemimager.conf.5			\
+			si_lint.8						\
+			systemimager.conf.5				\
 			systemimager.cmdline.7			\
-			systemimager.disks-layout.7	\
+			systemimager.disks-layout.7		\
 			systemimager.network-config.7	\
-			systemimager-rsyncd.conf.5	\
+			systemimager-rsyncd.conf.5		\
 			si_mkrsyncd_conf.8				\
-			si_mkclientnetboot.8				\
-			si_mkbootpackage.8		\
-			si_pcp.8			\
-			si_psh.8			\
-			si_pushinstall.8		\
-			si_pushoverrides.8		\
-			si_mkautoinstalldisk.8		\
-			si_netbootmond.8		\
-			si_clusterconfig.8		\
+			si_mkclientnetboot.8			\
+			si_mkbootpackage.8				\
+			si_pcp.8						\
+			si_psh.8						\
+			si_pushinstall.8				\
+			si_pushoverrides.8				\
+			si_mkautoinstalldisk.8			\
+			si_netbootmond.8				\
+			si_clusterconfig.8				\
 			si_pushupdate.8
 
 CLIENT_MAN = si_prepareclient.8 si_updateclient.8
@@ -80,6 +79,9 @@ si_pushoverrides.8: $(TOPDIR)/sbin/si_pushoverrides
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
 
 si_mkautoinstalldisk.8: $(TOPDIR)/sbin/si_mkautoinstalldisk
+	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
+
+si_mkdhcpserver.8: $(TOPDIR)/sbin/si_mkdhcpserver
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
 
 si_netbootmond.8: $(TOPDIR)/sbin/si_netbootmond
