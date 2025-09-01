@@ -4,11 +4,10 @@ use strict;
 use warnings;
 use Getopt::Long;
 use File::Spec;
-use POSIX qw(strftime);
 use SystemImager::IpUtils qw(get_local_ip get_network_interfaces);
 use SystemImager::KeaConfUtils qw(
     load_kea_config write_kea_config add_client list_clients
-    add_network list_networks add_pool list_pools del_pool del_network del_clients
+    add_network list_networks add_pool list_pools
 );
 
 # Variables pour stocker les options
@@ -27,6 +26,7 @@ my $help;
 my @add_clients;         # Liste de triplets [nom, MAC, IP]
 my $global;              # Option --global pour --add-client
 my @del_clients;         # Liste de critères pour suppression
+my $config_file;
 my $debug;
 my $list_clients;
 my $list_pools;
@@ -53,6 +53,7 @@ GetOptions(
     'list-pools' => \$list_pools,
     'list-subnets' => \$list_subnets,
     'csv' => \$csv,
+	'file=s' => \$config_file,
     'debug' => \$debug,
     'help' => \$help
 ) or die "Erreur dans les options de la ligne de commande\n";
@@ -67,8 +68,8 @@ if ($help) {
 my $has_modifications = @add_networks || @del_networks || @add_clients || @del_clients;
 
 # Vérifier si le fichier de configuration est accessible en écriture
-my $config_file = '/etc/kea/kea-dhcp4.conf';
-my $config_dir = File::Spec->catdir('/etc', 'kea');
+$config_file ||= '/etc/kea/kea-dhcp4.conf';
+my $config_dir = File::Spec->catdir(File::Spec->splitpath($config_file))[1];
 if ($has_modifications) {
     if (-e $config_file) {
         die "Erreur: Impossible d'écrire dans $config_file : fichier non accessible en écriture\n" unless -w $config_file;
@@ -83,7 +84,7 @@ if (system("which kea-dhcp4 >/dev/null 2>&1") != 0) {
 }
 
 # Charger la configuration
-my ($config, $config_exists, $changelog) = SystemImager::KeaConfUtils::load_kea_config($config_file, $debug);
+my ($config, $config_exists) = SystemImager::KeaConfUtils::load_kea_config($config_file, $debug);
 if (!$config_exists && !@add_networks && !@add_clients && !@del_clients && !@del_networks && !($list_clients || $list_pools || $list_subnets)) {
     die "L'option --add-network est requise pour créer une nouvelle configuration\n";
 }
@@ -155,44 +156,74 @@ if (defined $log_server_port) {
     die "log-server-port doit être un entier entre 1 et 65535\n" unless $log_server_port >= 1 && $log_server_port <= 65535;
 }
 
-# Initialiser le changelog pour les nouvelles modifications
-my @new_changelog_entries;
-my $current_time = strftime("%Y-%m-%d %H:%M:%S", localtime);
-
 # Ajouter les réseaux
 if (@add_networks) {
     foreach my $i (0 .. $#add_networks / 3) {
         my ($net, $ip_start, $ip_end) = @add_networks[$i*3 .. $i*3+2];
-        unless (defined $net && $net ne '' && $net =~ m{^\d+\.\d+\.\d+\.\d+/\d+$}) {
-            print "Erreur: Paramètre réseau invalide ou manquant pour --add-network: ", (defined $net ? $net : "indéfini"), "\n";
+        unless (defined $net && $net ne '') {
+            print "Erreur: Paramètre réseau manquant pour --add-network\n";
             next;
         }
-        if (defined $ip_start && !defined $ip_end) {
-            print "Erreur: IP de début fournie ($ip_start) mais IP de fin manquante pour le réseau $net\n";
-            next;
-        }
-        if (SystemImager::KeaConfUtils::add_network($config, $net, $ip_start, $ip_end, $debug)) {
-            my $entry = defined $ip_start && defined $ip_end
-                ? "// $current_time Added network $net with pool $ip_start-$ip_end"
-                : "// $current_time Added network $net";
-            push @new_changelog_entries, $entry;
-        }
+        SystemImager::KeaConfUtils::add_network($config, $net, $ip_start, $ip_end, $debug) or next;
     }
 }
 
 # Supprimer les réseaux
+my %existing_subnets;
+if (exists $config->{"Dhcp4"}->{"subnet4"}) {
+    %existing_subnets = map { $_->{"subnet"} => $_ } @{$config->{"Dhcp4"}->{"subnet4"}};
+}
+
+my @deleted_subnets;
+my @deleted_reservations;
 if (@del_networks) {
     foreach my $i (0 .. $#del_networks / 2) {
         my ($net, $force) = @del_networks[$i*2 .. $i*2+1];
-        unless (defined $net && $net ne '' && $net =~ m{^\d+\.\d+\.\d+\.\d+/\d+$}) {
-            print "Erreur: Paramètre réseau invalide ou manquant pour --del-network: ", (defined $net ? $net : "indéfini"), "\n";
+        my ($ip, $mask) = split('/', $net);
+        die "Format réseau invalide: $net\n" unless SystemImager::IpUtils::valid_ip($ip) && $mask =~ /^\d+$/ && $mask >= 0 && $mask <= 32;
+        $force = (defined $force && $force eq '--force') ? 1 : 0;
+
+        unless (exists $existing_subnets{$net}) {
+            print "Erreur: Le sous-réseau $net n'existe pas dans la configuration\n";
             next;
         }
-        if (SystemImager::KeaConfUtils::del_network($config, $net, $force, $debug)) {
-            my $entry = $force
-                ? "// $current_time Deleted network $net with force"
-                : "// $current_time Deleted network $net";
-            push @new_changelog_entries, $entry;
+
+        # Vérifier les réservations dans le sous-réseau
+        my @conflicting_reservations;
+        my @remaining_global_reservations;
+        $config->{"Dhcp4"}->{"reservations"} ||= [];
+        foreach my $reservation (@{$config->{"Dhcp4"}->{"reservations"}}) {
+            if ($reservation->{'ip-address'} && SystemImager::IpUtils::is_ip_in_network($reservation->{'ip-address'}, $mask, $ip, $mask)) {
+                push @conflicting_reservations, $reservation;
+            } else {
+                push @remaining_global_reservations, $reservation;
+            }
+        }
+
+        if (@conflicting_reservations && !$force) {
+            print "Erreur: Impossible de supprimer le sous-réseau $net car il contient des réservations :\n";
+            foreach my $res (@conflicting_reservations) {
+                print "  - ", ($res->{"hostname"} || $res->{'hw-address'} || $res->{'ip-address'}), "\n";
+            }
+            print "Utilisez --force pour supprimer le sous-réseau et ses réservations.\n";
+            next;
+        }
+
+        # Supprimer le sous-réseau
+        $config->{"Dhcp4"}->{"subnet4"} = [ grep { $_->{"subnet"} ne $net } @{$config->{"Dhcp4"}->{"subnet4"}} ];
+        push @deleted_subnets, $net;
+
+        # Supprimer les réservations si --force
+        if ($force && @conflicting_reservations) {
+            push @deleted_reservations, map { $_->{"hostname"} || $_->{'hw-address'} || $_->{'ip-address'} } @conflicting_reservations;
+            $config->{"Dhcp4"}->{"reservations"} = \@remaining_global_reservations;
+        }
+    }
+
+    if (@deleted_subnets) {
+        print "Sous-réseau(s) supprimé(s) : ", join(", ", @deleted_subnets), "\n";
+        if (@deleted_reservations) {
+            print "Réservation(s) supprimée(s) : ", join(", ", @deleted_reservations), "\n";
         }
     }
 }
@@ -201,19 +232,58 @@ if (@del_networks) {
 if (@add_clients) {
     foreach my $i (0 .. $#add_clients / 3) {
         my ($name, $mac, $ip) = @add_clients[$i*3 .. $i*3+2];
-        if (SystemImager::KeaConfUtils::add_client($config, $name, $mac, $ip, $global, $debug)) {
-            my $entry = "// $current_time Added client $name with MAC $mac and IP $ip" . ($global ? " (global)" : "");
-            push @new_changelog_entries, $entry;
-        }
+        SystemImager::KeaConfUtils::add_client($config, $name, $mac, $ip, $global, $debug) or next;
     }
 }
 
 # Supprimer les clients
+my $deleted_count = 0;
+my @deleted_clients;
 if (@del_clients) {
-    my $deleted_count = SystemImager::KeaConfUtils::del_clients($config, \@del_clients, $debug);
+    my @remaining_global_reservations;
+    $config->{"Dhcp4"}->{"reservations"} ||= [];
+    foreach my $reservation (@{$config->{"Dhcp4"}->{"reservations"}}) {
+        my $keep = 1;
+        foreach my $criterion (@del_clients) {
+            $criterion =~ s/\*/.*/g;
+            if (($reservation->{"hostname"} && $reservation->{"hostname"} =~ /^$criterion$/) ||
+                ($reservation->{'hw-address'} && $reservation->{'hw-address'} =~ /^$criterion$/i) ||
+                ($reservation->{'ip-address'} && $reservation->{'ip-address'} =~ /^$criterion$/)) {
+                $keep = 0;
+                $deleted_count++;
+                push @deleted_clients, $reservation->{"hostname"} || $reservation->{'hw-address'} || $reservation->{'ip-address'};
+            }
+        }
+        push @remaining_global_reservations, $reservation if $keep;
+    }
+    $config->{"Dhcp4"}->{"reservations"} = \@remaining_global_reservations;
+
+    if (exists $config->{"Dhcp4"}->{"subnet4"}) {
+        foreach my $subnet (@{$config->{"Dhcp4"}->{"subnet4"}}) {
+            next unless exists $subnet->{"reservations"};
+            my @remaining_subnet_reservations;
+            foreach my $reservation (@{$subnet->{"reservations"}}) {
+                my $keep = 1;
+                foreach my $criterion (@del_clients) {
+                    $criterion =~ s/\*/.*/g;
+                    if (($reservation->{"hostname"} && $reservation->{"hostname"} =~ /^$criterion$/) ||
+                        ($reservation->{'hw-address'} && $reservation->{'hw-address'} =~ /^$criterion$/i) ||
+                        ($reservation->{'ip-address'} && $reservation->{'ip-address'} =~ /^$criterion$/)) {
+                        $keep = 0;
+                        $deleted_count++;
+                        push @deleted_clients, $reservation->{"hostname"} || $reservation->{'hw-address'} || $reservation->{'ip-address'};
+                    }
+                }
+                push @remaining_subnet_reservations, $reservation if $keep;
+            }
+            $subnet->{"reservations"} = \@remaining_subnet_reservations;
+        }
+    }
+
     if ($deleted_count > 0) {
-        my $entry = "// $current_time Deleted $deleted_count client(s): " . join(", ", @del_clients);
-        push @new_changelog_entries, $entry;
+        print "Supprimé $deleted_count client(s) : ", join(", ", @deleted_clients), "\n";
+    } else {
+        print "Aucun client supprimé\n";
     }
 }
 
@@ -441,9 +511,7 @@ $config->{"Dhcp4"}->{"option-data"} = [
 
 # Écrire la configuration si des modifications ont été demandées
 if ($has_modifications) {
-    # Combiner le changelog existant avec les nouvelles entrées
-    my @updated_changelog = (@$changelog, @new_changelog_entries);
-    SystemImager::KeaConfUtils::write_kea_config($config, $config_file, \@updated_changelog);
+    SystemImager::KeaConfUtils::write_kea_config($config, $config_file);
 }
 
 # Fonction pour afficher l'aide
@@ -467,6 +535,7 @@ Options:
   --list-clients [--csv]          Liste les réservations
   --list-pools [--csv]            Liste les pools
   --list-subnets [--csv]          Liste les sous-réseaux
+  --file <path>                   Fichier de configuration (par défaut: /etc/kea/kea-dhcp4.conf)
   --debug                         Active les messages de débogage
   --help                          Affiche cette aide
 EOF
@@ -486,7 +555,7 @@ si_mkdhcpserver [options]
 
 =head1 DESCRIPTION
 
-Le script C<si_mkdhcpserver> génère un fichier de configuration JSON pour le serveur Kea DHCPv4, enregistré dans F</etc/kea/kea-dhcp4.conf>. Il permet de configurer des sous-réseaux, des pools, des réservations de clients, et des options DHCP spécifiques. Le script prend en charge l'ajout, la suppression et la mise à jour de sous-réseaux et de réservations, ainsi que l'affichage des informations de configuration existantes. La version 0.8.4 inclut des améliorations pour la gestion des commentaires et du changelog. Les commentaires dans le fichier de configuration existant ne sont pas préservés, sauf pour l'en-tête standard et le changelog.
+Le script C<si_mkdhcpserver> génère un fichier de configuration JSON pour le serveur Kea DHCPv4, enregistré dans F</etc/kea/kea-dhcp4.conf>. Il permet de configurer des sous-réseaux, des pools, des réservations de clients, et des options DHCP spécifiques. Le script prend en charge l'ajout, la suppression et la mise à jour de sous-réseaux et de réservations, ainsi que l'affichage des informations de configuration existantes. La version 0.8.2 inclut des améliorations pour la modularité avec l'utilisation des modules C<SystemImager::IpUtils> et C<SystemImager::KeaConfUtils>. Les commentaires dans le fichier de configuration existant ne sont pas préservés, sauf pour un en-tête standard ajouté lors de la génération du fichier.
 
 =head1 OPTIONS
 
@@ -502,17 +571,17 @@ Liste des serveurs DNS (IP ou FQDN) séparés par des espaces. Les adresses doiv
 
 =item B<--add-network> <ip/mask> [<ip_debut> <ip_fin>]
 
-Ajoute ou met à jour un sous-réseau avec l'adresse réseau et le masque spécifiés (format C<xxx.xxx.xxx.xxx/n>). Si C<ip_debut> et C<ip_fin> sont fournis, un pool DHCP est défini pour ce sous-réseau via C<SystemImager::KeaConfUtils::add_pool>. La fonction vérifie que :
+Ajoute ou met à jour un sous-réseau avec l'adresse réseau et le masque spécifiés (format C<xxx.xxx.xxx.xxx/n>). Si C<ip_debut> et C<ip_fin> sont fournis, un pool DHCP est défini pour ce sous-réseau. La fonction C<SystemImager::KeaConfUtils::add_network> vérifie que :
 - L'adresse IP et le masque sont valides.
 - Les adresses de début et de fin du pool sont dans le sous-réseau et cohérentes.
 - Le pool ne chevauche pas partiellement un pool existant.
 - Le pool n'inclut pas d'adresses réservées globalement.
 
-Un identifiant unique est assigné au sous-réseau. Les modifications sont enregistrées dans le changelog.
+Un identifiant unique est assigné au sous-réseau.
 
 =item B<--del-network> <ip/mask> [--force]
 
-Supprime un sous-réseau spécifié via C<SystemImager::KeaConfUtils::del_network>. Si le sous-réseau contient des réservations, l'opération échoue sauf si C<--force> est utilisé, auquel cas les réservations globales correspondantes sont supprimées. Les modifications sont enregistrées dans le changelog.
+Supprime un sous-réseau spécifié. Si le sous-réseau contient des réservations, l'opération échoue sauf si C<--force> est utilisé, auquel cas les réservations globales correspondantes sont supprimées.
 
 =item B<--image-server> <ip|fqdn>
 
@@ -544,11 +613,11 @@ Répertoire temporaire pour le staging. Ajoute une option DHCP personnalisée (c
 
 =item B<--add-client> <nom> <MAC> <IP> [--global]
 
-Ajoute une réservation pour un client avec C<SystemImager::KeaConfUtils::add_client>. Vérifie l'unicité du nom, de la MAC, et de l'IP dans toute la configuration. Sans C<--global>, l'IP doit appartenir à un sous-réseau défini. Les modifications sont enregistrées dans le changelog.
+Ajoute une réservation pour un client avec C<SystemImager::KeaConfUtils::add_client>. Vérifie l'unicité du nom, de la MAC, et de l'IP dans toute la configuration. Sans C<--global>, l'IP doit appartenir à un sous-réseau défini.
 
 =item B<--del-client> <nom|MAC|IP>
 
-Supprime les réservations correspondant au critère via C<SystemImager::KeaConfUtils::del_clients> (support des wildcards *). Les modifications sont enregistrées dans le changelog.
+Supprime les réservations correspondant au critère (support des wildcards *).
 
 =item B<--list-clients> [--csv]
 
@@ -561,6 +630,10 @@ Liste les pools avec C<SystemImager::KeaConfUtils::list_pools>. Colonnes : subne
 =item B<--list-subnets> [--csv]
 
 Liste les sous-réseaux avec C<SystemImager::KeaConfUtils::list_networks>. Colonnes : subnet, subnet-id, ip-min, ip-max. Format CSV avec C<--csv>.
+
+=item B<--file> <path>
+
+Spécifie le chemin du fichier de configuration Kea DHCPv4 (par défaut: F</etc/kea/kea-dhcp4.conf>).
 
 =item B<--debug>
 
@@ -577,9 +650,8 @@ Affiche l'aide.
 - Les interfaces réseau sont détectées via C<SystemImager::IpUtils::get_network_interfaces>. "N/A" est affiché si aucune interface ne correspond à un sous-réseau.
 - Les réservations ajoutées avec C<--add-client> sont placées dans le sous-réseau correspondant à l'IP (vérifié avec C<SystemImager::IpUtils::is_ip_in_network>) ou globalement avec C<--global>. L'unicité est vérifiée dans toute la configuration.
 - Les options de listage utilisent les fonctions de C<SystemImager::KeaConfUtils> et affichent "N/A" pour les champs manquants ou les interfaces non associées.
-- Les commentaires sont limités à l'en-tête standard et au changelog générés par C<SystemImager::KeaConfUtils::write_kea_config>.
-- Les pools vides C<{}> sont filtrés pour garantir une configuration JSON valide pour Kea.
-- Le changelog est préservé et enrichi avec les modifications (ajout/suppression de réseaux, pools, clients) au format C<// YYYYMMDD HH:MM:SS <description>>.
+- Les commentaires sont limités à l'en-tête standard généré par C<SystemImager::KeaConfUtils::write_kea_config>.
+- Les paramètres non définis pour C<--add-network> sont maintenant correctement gérés pour éviter les erreurs de type "Use of uninitialized value".
 
 =head1 EXIT STATUS
 
@@ -598,7 +670,6 @@ Modules Perl :
 - C<JSON::PP>
 - C<File::Spec>
 - C<Text::Table>
-- C<POSIX>
 - C<SystemImager::IpUtils>
 - C<SystemImager::KeaConfUtils>
 
@@ -626,18 +697,12 @@ Source du domaine DNS par défaut.
 
 =head1 BUGS
 
-- Les commentaires existants (sauf le changelog) ne sont pas préservés, sauf l'en-tête standard.
+- Les commentaires existants ne sont pas préservés, sauf l'en-tête standard.
 - Les sous-réseaux mal formés dans la configuration existante sont ignorés.
 - Signalez les bugs à l'équipe SystemImager.
 
-B<Problèmes résolus dans la version 0.8.4> :
-- Correction des erreurs "Use of uninitialized value" dans C<SystemImager::KeaConfUtils::add_pool> et C<SystemImager::KeaConfUtils::add_network> en renforçant les vérifications des paramètres réseau.
-- Correction d'un problème où des pools vides C<{}> étaient inclus dans la configuration JSON, rendant le fichier invalide pour Kea. Les pools sont désormais filtrés pour garantir que C<"pools"> est soit une liste de pools valides, soit C<[]>.
-- Suppression de la duplication du code de gestion des pools dans C<add_network> en réutilisant C<add_pool>.
-- Ajout des fonctions C<del_pool>, C<del_network>, et C<del_clients> dans C<SystemImager::KeaConfUtils> pour une meilleure modularité.
-- Amélioration de la validation des arguments dans C<si_mkdhcpserver> pour éviter les erreurs dues à des paramètres réseau mal formés.
-- Correction de l'erreur de décodage JSON en supprimant les commentaires C<//> et C</* */> avant le traitement par C<JSON::PP>.
-- Ajout de la gestion du changelog pour enregistrer les modifications dans le fichier de configuration.
+B<Problèmes résolus dans la version 0.8.2> :
+- Correction des erreurs "Use of uninitialized value" dans C<SystemImager::KeaConfUtils::add_pool> et C<SystemImager::IpUtils::valid_ip> en ajoutant des vérifications explicites pour les paramètres indéfinis.
 
 =head1 AUTHOR
 
