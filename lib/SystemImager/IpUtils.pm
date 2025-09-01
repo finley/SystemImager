@@ -32,7 +32,7 @@ our $VERSION = "SYSTEMIMAGER_VERSION_STRING";
 use Exporter qw(import);
 our @EXPORT_OK = qw(
     valid_ip
-	valid_fqdn
+    valid_fqdn
     ip_to_int
     first_usable_ip
     is_ip_in_network
@@ -45,6 +45,7 @@ our @EXPORT_OK = qw(
 
 sub valid_ip {
     my ($ip) = @_;
+    return 0 unless defined $ip && $ip ne '';
     return 0 unless $ip =~ /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
     return 0 if $1 > 255 || $2 > 255 || $3 > 255 || $4 > 255;
     return 1;

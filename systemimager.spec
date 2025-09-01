@@ -1060,6 +1060,8 @@ fi
 %{_bindir}/si_pushoverrides
 %{perl_vendorlib}/SystemImager/Server.pm
 %{perl_vendorlib}/SystemImager/HostRange.pm
+%{perl_vendorlib}/SystemImager/IpUtils.pm
+%{perl_vendorlib}/SystemImager/KeaConfUtils.pm
 %{_mandir}/man5/systemimager*
 %{_mandir}/man7/systemimager*
 %{_mandir}/man8/si_*

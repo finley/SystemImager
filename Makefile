@@ -549,6 +549,7 @@ install_server_libs:
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Server.pm  $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/HostRange.pm  $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/IpUtils.pm  $(LIB_DEST)/SystemImager
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/KeaConfUtils.pm  $(LIB_DEST)/SystemImager
 	mkdir -p $(USR)/share/systemimager/icons
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/icons/serverinit.gif	$(USR)/share/systemimager/icons
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/icons/serverinst.gif 	$(USR)/share/systemimager/icons
