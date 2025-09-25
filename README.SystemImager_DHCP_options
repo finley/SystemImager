@@ -11,20 +11,19 @@ new kernel cmdline parameters (si.config= ...)
 See http://www.iana.org/assignments/bootp-dhcp-parameters for details on DHCP
 options.  The following are special DHCP options used by SystemImager.
 
-	If you're using legacy isc-dhcpd:
+	=> If you're using legacy isc-dhcpd:
     option-140  ->  IMAGESERVER
     option-141  ->  LOG_SERVER_PORT
     option-142  ->  SSH_DOWNLOAD_URL
     option-143  ->  FLAMETHROWER_DIRECTORY_PORTBASE
     option-144  ->  TMPFS_STAGING
 
-	If you're using new isc-kea-dhcp4:
-	200 -> Image server (ip-address or fqdn)
-    201 -> Log Server (ip-address or fqdn)
-    202 -> Log Server Port (uint-16)
-    203 -> SSH Download URL (string)
-    204 -> Flamethrower port base (uint-16)
-    205 -> tmpfs staging dir (string)
+	=> If you're using new isc-kea-dhcp4:
+	image-server           : code 200 -> Image server (ip-address or fqdn)
+	log-server-port        : code 201 -> Log Server Port (uint-16)
+	ssh-download-url       : code 202 -> SSH Download URL (string)
+	flamethrower-port-base : code 203 -> Flamethrower port base (uint-16)
+	tmpfs-staging          : code 204 -> tmpfs staging dir (string)
 
 Files in the SystemImager source code that are affected by these options 
 include:

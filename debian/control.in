@@ -2,7 +2,8 @@ Source: systemimager
 Section: admin
 Priority: optional
 Maintainer: olivier lahaye <olivier.lahaye@free.fr>
-Build-Depends-Indep: dpkg-dev, build-essential, make, debhelper, dos2unix, rsync, coreutils, dracut, dracut-network, plymouth, plymouth-themes, xfsprogs, xmlstarlet, jq, parted, ipcalc, transmission-cli, nmap, kexec-tools, lvm2, net-tools, bind9-host, uuid-runtime, btrfs-progs, cifs-utils, openssh-server, openssh-client, linux-image-${misc:Package-Arch}, ncat, docbook-to-man, docbook-utils, gdisk, ethtool, lsscsi, usbutils, pciutils, lshw, hwdata, iputils-ping, e2fsprogs, dosfstools, util-linux, fdisk, keyutils, bc, dc, ncat, ncurses-base, gawk, fonts-dejavu, kbd, gettext, coreutils, cryptsetup, systemd, socat, strace, lsof, sysvinit-utils, libjson-perl, dmraid, dmidecode, lldpad, fcoe-utils, nvme-cli, rng-tools5, udpcast, flamethrower
+Build-Depends-Indep: dpkg-dev, build-essential, make, debhelper, dos2unix, rsync, coreutils, dracut, dracut-network, plymouth, plymouth-themes, xfsprogs, xmlstarlet, jq, parted, ipcalc, transmission-cli, nmap, kexec-tools, lvm2, net-tools, bind9-host, uuid-runtime, btrfs-progs, cifs-utils, openssh-server, openssh-client, linux-image-${misc:Package-Arch}, ncat, docbook-to-man, docbook-utils, gdisk, ethtool, lsscsi, usbutils, pciutils, lshw, hwdata, iputils-ping, e2fsprogs, dosfstools, util-linux, fdisk, keyutils, bc, dc, ncat, ncurses-base, gawk, fonts-dejavu, kbd, gettext, coreutils, cryptsetup, systemd, socat, strace, lsof, sysvinit-utils, libjson-perl, dmraid, dmidecode, lldpad, fcoe-utils, nvme-cli, rng-tools5, udpcast, flamethrower, kea-dhcp4-server, bash
+Standards-Version: 4.3.0.3
 Standards-Version: 4.3.0.3
 
 Package: systemimager-server

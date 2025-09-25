@@ -60,7 +60,8 @@ BUG: variables.txt is not updated with SI_IMAGING_STATUS that stays at "inprogre
 - shutdown network before directboot otherwise the interface is not restarted. Thus, if HWADDR is spoofed (in config),
   this doesn't take effect. Network Manager doesn't restart the whole interface. started means do nothing for NetworkManager.
   => Need investigations.
-- update sbin/si_mkdhcpserver so it works with systemd (also use service instead of running init.d script on old distros)
+- DONE: rewrite si_mkdhcpserver to add support for kea-dhcp4
+- update sbin/si_mkdhcpserver_legacy so it works with systemd (also use service instead of running init.d script on old distros)
 - DONE: fix si_prepareclient so it uses si_mkbootpackage instead of trying to build its own kernel and fail.
 - fix si_getimage so it installs scripts in /var/lib/systemimager/scripts/main-install/
   fix si_getimage so it installs correctly remote boot package

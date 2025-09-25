@@ -241,5 +241,12 @@ binary-indep: build-indep install-indep
 	dh_md5sums  $(NON_BOOT_PKGS)
 	dh_builddeb $(NON_BOOT_PKGS)
 
+# Override dh_auto_test to run the custom test script for si_mkdhcpserver
+override_dh_auto_test:
+	# Run the si_mkdhcpserver test script
+	# Ensure the script is executable and in the correct path
+	chmod +x utilities/test_si_mkdhcpserver.sh
+	./utilities/test_si_mkdhcpserver.sh
+
 binary: binary-indep binary-arch
 .PHONY: build cleandeb clean binary-indep binary-arch binary install configure

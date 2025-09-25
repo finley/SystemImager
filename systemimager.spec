@@ -205,6 +205,7 @@ Requires: rsync >= 2.4.6, systemimager-common = %{version}, dracut-systemimager 
 Requires: %pkg_dhcpd
 Requires(post): systemimager-common = %{version}
 Requires: %pkg_mkisofs
+BuildRequires: kea
 # If systemd
 %if 0%{?_unitdir:1}
 %systemd_requires
@@ -274,7 +275,7 @@ BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Obsoletes: systemimager-flamethrower
+Obsoletes: systemimager-flamethrower <= 4.9.1
 Requires: systemimager-server = %{version}, perl, flamethrower >= 0.1.6
 # If systemd
 %if 0%{?_unitdir:1}
@@ -380,7 +381,7 @@ BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Obsoletes: systemimager-%{_arch}boot
+Obsoletes: systemimager-%{_arch}boot <= 4.9.1
 # SuSE includes dracut-netwok in main package
 %if ! %is_suse%{?is_opensuse}
 BuildRequires: dracut-network
@@ -462,7 +463,7 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: %{name}-%{_arch}boot-%{_boot_flavor} = %{version}
-Obsoletes: %{name}-%{_arch}initrd_template
+Obsoletes: %{name}-%{_arch}initrd_template <= 4.9.1
 AutoReqProv: no
 
 %description initrd_template
@@ -491,7 +492,7 @@ Version: %ver
 Release: %rel
 License: GPL
 Group: Applications/System
-Obsoletes: systemimager-bittorrent
+Obsoletes: systemimager-bittorrent <= 4.9.1
 BuildRoot: /tmp/%{name}-%{ver}-root
 BuildArch: noarch
 Packager: %packager
@@ -1069,6 +1070,10 @@ fi
 #{perl_vendorlib}/BootMedia
 #{perl_vendorlib}/BootGen
 
+%check server
+# Check that si_mkdhcpserver is compatible with current kea-dhcp4
+./utilities/test_si_mkdhcpserver.sh
+
 %files doc
 %defattr(-, root, root)
 %doc doc/manual_source/html
@@ -1178,7 +1183,7 @@ fi
 %attr(0755, root, root) %{_exec_prefix}/lib/systemimager/clients-statuses-helper
 
 %changelog
-* Fri Aug 29 2025 Olivier Lahaye <olivier.lahaye@cea.fr> 4.9.1-0.5
+* Thu Sep 25 2025 Olivier Lahaye <olivier.lahaye@cea.fr> 4.9.5-0.1
 - Migrate to Kea DHCP server
 - dhcp options are now used in range 200 to 204
 - new si_mkdhcpserver for kea-dhcp4.conf creation / management

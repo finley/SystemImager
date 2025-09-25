@@ -1,12 +1,25 @@
-systemimager (4.9.1##PKG_REL##) experimental; urgency=low
+systemimager (4.9.6##PKG_REL##) experimental; urgency=low
 
-  * New development release 4.9.1 (pre-5.0.0). See changelog for more infos.
+  * New development release 4.9.6 (pre-5.0.0). See changelog for more infos.
+
+ -- Olivier LAHAYE <olivier.lahaye@cea.fr>  Thu, 25 Sep 2025 10:42:47 +0200
+
+systemimager (4.9.5-1) unstable; urgency=low
+
+  * New development release 4.9.5 (pre-5.0.0). See changelog for more infos.
   * Completely reworked packaging.
   * new dependancies (dracut, ...
   * removed systemconfigurator dependancy
   * add support for arm64 archetecture (aarch64)
+  * add support for kea-dhcp4-server
+  * new options range for kea-dhcp4:
+        200 -> image-server (ip-address or fqdn) # Image server
+        201 -> log-server-port (uint-16)         # Log server port
+        202 -> ssh-download-url (string)         # SSH download URL
+        203 -> flamethrower-port-base (uint-16)  # Flamethrower port base
+        204 -> tmpfs-staging (string)            # tmpfs staging dir
 
- -- Olivier LAHAYE <olivier.lahaye@cea.fr>  Mon, 09 Apr 2018 11:44:59 +0200
+ -- Olivier LAHAYE <olivier.lahaye@cea.fr>  Thu, 25 Sep 2025 10:41:27 +0200
 
 systemimager (4.3.0-1) unstable; urgency=low
 
