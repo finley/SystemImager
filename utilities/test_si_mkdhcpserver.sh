@@ -30,6 +30,7 @@ TEST_DIR="/tmp/si_mkdhcpserver_test"
 CONFIG_FILE="${TEST_DIR}/kea-dhcp4.conf"
 INVALID_DIR="/tmp/nonexistent_dir_$(date +%s)"
 INVALID_FILE="${TEST_DIR}/kea-dhcp4|invalid.conf"
+export PERL5LIB=$(perl -e 'print join(":", @INC)'):./lib # Make sure si_mkdhcpserver finds its lib
 SI_MKDHCP="sbin/si_mkdhcpserver"  # Path to the Perl script (adjust if necessary)
 KEA_DHCP4="kea-dhcp4"  # Path to the kea-dhcp4 executable (adjust if necessary)
 EXIT_SUCCESS=0
