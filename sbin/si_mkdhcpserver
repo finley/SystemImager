@@ -1,553 +1,778 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
+
+#
+#    vi:set filetype=perl:
+#
+#    This file is part of SystemImager.
+#
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 2025 Olivier Lahaye <olivier.lahaye1@free.fr>
+#
+#    Others who have contributed to this code (in alphabetical order):
+#     Grok 3 https://grok.com
+#
+#    See http://www.iana.org/assignments/bootp-dhcp-parameters for info on
+#    custom option numbers.
+#
 
 use strict;
-use warnings;
-use Getopt::Long;
+use Getopt::Long qw(:config no_bundling no_auto_help);
+use Pod::Usage;
 use File::Spec;
-use SystemImager::IpUtils qw(get_local_ip get_network_interfaces);
-use SystemImager::KeaConfUtils qw(
-    load_kea_config write_kea_config add_client list_clients
-    add_network list_networks add_pool list_pools
-);
+use File::Copy;
+use POSIX qw(strftime);
+use SystemImager::IpUtils qw(valid_ip);
+use SystemImager::KeaConfUtils;
 
-# Variables pour stocker les options
-my $dns_domain;
+# Global variables
+my $config_file = "/etc/kea/kea-dhcp4.conf";
+my $debug = 0;
+my $quiet = 0;
+my @add_subnets;
+my @del_subnets;
+my @add_pools;
+my @del_pools;
+my @add_clients;
+my @del_clients;
+my $force = 0;
+my $help = 0;
+my $man = 0;
+my $list_subnets = 0;
+my $list_pools = 0;
+my $list_clients = 0;
+my $csv = 0;
+my @dns_domains;
+my @dns_searches;
 my @dns_servers;
-my @add_networks;        # Liste de réseaux : [ [ip/mask, ip_debut, ip_fin], ... ]
-my @del_networks;        # Liste de réseaux à supprimer : [ ip/mask, force ]
-my $image_server;
-my $boot_server;
-my $log_server;
-my $log_server_port;
-my $ssh_download_url;
-my $flamethrower_port_base;
-my $staging_dir;
-my $help;
-my @add_clients;         # Liste de triplets [nom, MAC, IP]
-my $global;              # Option --global pour --add-client
-my @del_clients;         # Liste de critères pour suppression
-my $config_file;
-my $debug;
-my $list_clients;
-my $list_pools;
-my $list_subnets;
-my $csv;
+my @image_servers;
+my @boot_servers;
+my @log_servers;
+my @log_server_ports;
+my @ssh_download_urls;
+my @flamethrower_port_bases;
+my @staging_dir;
 
-# Parsing des options
+# Override die to use pod2usage for option-related errors
+BEGIN {
+    *CORE::GLOBAL::die = sub {
+        my ($message) = @_;
+        if ($quiet && !($help || $man || $debug)) {
+            exit 1;  # Simply exit with status 1 when quiet is enabled
+        }
+        chomp $message;
+        my ($option) = ($message =~ /--([\w-]+):/);
+        if ($option) {
+            pod2usage(
+                -message => $message,
+                -sections => [ "SYNOPSIS", "OPTIONS/$option" ],
+                -exitval => 1,
+                -verbose => 99
+            );
+        } else {
+            local $! = 1;  # Set $! to control the exit code
+            CORE::die "$message\n";
+        }
+    };
+}
+
+# Pre-parse @ARGV to set $debug early
+for (my $i = 0; $i < @ARGV; $i++) {
+    if ($ARGV[$i] =~ /^--debug(?:=(\d+))?$/ || ($ARGV[$i] eq "--debug" && $i + 1 < @ARGV && $ARGV[$i + 1] !~ /^--/)) {
+        $debug = defined $1 ? $1 : ($i + 1 < @ARGV ? $ARGV[$i + 1] : 0);
+        $debug = 0 if $debug !~ /^\d+$/;
+        last;
+    }
+}
+
+#-------------------------------------------------------------------------------
+# Function:     get_modifier
+# Description:  Retrieves the modifier (--subnet or --client) and its value from @ARGV
+#               at the specified index, returning a hash with the modifier type and value.
+#               If no valid modifier is found, returns --global with an undefined value.
+# Parameters:   $index - Integer, the current index in @ARGV to check for a modifier
+# Returns:      Hash reference with keys:
+#                 - modifier: String ("--global", "--subnet", or "--client")
+#                 - modifier_value: String or undef, the value associated with the modifier
+# Throws:       None (relies on Getopt::Long for validation of modifier values)
+#-------------------------------------------------------------------------------
+sub get_modifier {
+    my $modifier = "--global";
+    my $modifier_value = undef;
+    print "get_modifier called, ARGV=", join(", ", @ARGV), "\n" if $debug >= 3;
+    if (@ARGV && $ARGV[0] =~ /^--(subnet|client)$/) {
+        if (@ARGV > 1) {
+            $modifier = "--$1";
+            $modifier_value = $ARGV[1];
+            print "Found modifier=$modifier, value=$modifier_value\n" if $debug >= 3;
+            # Warn if the value looks like another option (possible missing value)
+            print "Warning: Modifier $modifier value '$modifier_value' looks like an option; possible missing value?\n" if $debug >= 1 && $modifier_value =~ /^--/;
+        } else {
+            print "Warning: Modifier $modifier found but no value provided\n" if $debug >= 1;
+        }
+    }
+    return { modifier => $modifier, modifier_value => $modifier_value };
+}
+
+# Function: check_arg
+# Description:  Validates an option argument based on its type. Checks if the
+#               argument does not start with -- (indicating a missing argument) and
+#               validates it against the specified type.
+# Parameters:   $opt - the name of the option
+#               $value - the argument to test
+#               $type - the expected type ('ip', 'file', 'subnet', 'client', 'fqdn', 'mac', 'ssh_url')
+# Returns:      The validated argument
+# Dies:         If the argument starts with -- or fails type validation
+sub check_arg {
+    my ($opt, $value, $type) = @_;
+    die "--$opt: Insufficient arguments.\n" if $value =~ /^--/;
+    if ($type eq 'ip') {
+        die "--$opt: Invalid IPv4 address: $value\n" unless valid_ip($value);
+    } elsif ($type eq 'path') {
+        die "--$opt: Invalid path format: $value\n" unless $value =~ m|^/(?:[a-zA-Z0-9._-][a-zA-Z0-9._-]*(?:/[a-zA-Z0-9._-][a-zA-Z0-9._-]*)*)?$|;
+    } elsif ($type eq 'file') {
+        die "--$opt: Invalid file path: $value\n" unless $value =~ m|^[\w/.-]+$| && $value !~ m|^\s*$|;
+    } elsif ($type eq 'subnet') {
+        die "--$opt: Invalid subnet format: $value\n" unless $value =~ m|^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}$|;
+    } elsif ($type eq 'client') {
+        die "--$opt: Invalid client format: $value\n"
+            unless $value =~ m{^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2})$};
+    } elsif ($type eq 'fqdn') {
+        die "--$opt: Invalid FQDN format: $value\n"
+            unless $value =~ m|^[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*$|;
+    } elsif ($type eq 'mac') {
+        die "--$opt: Invalid MAC address: $value\n"
+            unless $value =~ /^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/;
+    } elsif ($type eq 'port') {
+        die "--$opt: Invalid port format: $value\n" unless $value =~ m|^\d+$| && $value >= 0 && $value <= 65535;
+    } elsif ($type eq 'ssh_url') {
+        die "--$opt: Invalid SSH URL path format: $value\n"
+            unless $value =~ m|^/(?:[a-zA-Z0-9._-][a-zA-Z0-9._-]*(?:/[a-zA-Z0-9._-][a-zA-Z0-9._-]*)*)?$|;
+    } else {
+        die "--$opt: Unknown validation type: $type\n";
+    }
+    return $value;
+}
+
+# Parse command line options
+
+# Configure Getopt::Long to pass through unrecognized options
+# Complex options are parsed manually.
+Getopt::Long::Configure("pass_through");
+
 GetOptions(
-    'dns-domain=s' => \$dns_domain,
-    'dns-servers=s' => \@dns_servers,
-    'add-network=s{1,3}' => \@add_networks,
-    'del-network=s{1,2}' => \@del_networks,
-    'image-server=s' => \$image_server,
-    'boot-server=s' => \$boot_server,
-    'log-server=s' => \$log_server,
-    'log-server-port=i' => \$log_server_port,
-    'ssh-download-url:s' => \$ssh_download_url,
-    'flamethrower-port-base:i' => \$flamethrower_port_base,
-    'staging-dir=s' => \$staging_dir,
-    'add-client=s{3}' => \@add_clients,
-    'global' => \$global,
-    'del-client=s' => \@del_clients,
-    'list-clients' => \$list_clients,
-    'list-pools' => \$list_pools,
-    'list-subnets' => \$list_subnets,
-    'csv' => \$csv,
-	'file=s' => \$config_file,
-    'debug' => \$debug,
-    'help' => \$help
-) or die "Erreur dans les options de la ligne de commande\n";
+    "file=s"              => sub {
+		$config_file = check_arg(@_, 'file');
+	},
+    "debug:i"             => \$debug,
+    "quiet"               => \$quiet,
+    "help"                => \$help,
+    "man"                 => \$man,
+    "add-subnet=s{1}"     => sub {
+        push @add_subnets, check_arg(@_, 'subnet');
+    },
+    "del-subnet=s{1}"     => sub {
+        push @del_subnets, check_arg(@_, 'subnet');
+    },
+    "force"               => \$force,
+    "add-pool=s{2}" => sub {
+		push @add_pools, check_arg(@_, 'ip'); # called for each parameter. (resulting in a flat list)
+    },
+    "del-pool=s{2}" => sub {
+        push @del_pools, check_arg(@_, 'ip'); # called for each parameter. (resulting in a flat list)
+    },
+	"add-client=s{3,4}" => sub {
+        my ($opt, @args) = @_;
+		#check_arg($opt, $args[0], 'client'); # Validate client (fqdn or mac or ip)
+        push @add_clients, @args;
+		push @add_clients, shift @ARGV if defined $ARGV[0] && $ARGV[0] =~ /^--global/; # --xxx seen as option, thus sub not triggered 
+    },
+	"del-client=s{1}" => sub {
+        push @del_clients, [check_arg(@_, 'client')];
+    },
+    "dns-domain=s"        => sub {
+        push @dns_domains, { value => check_arg(@_, 'fqdn'), %{get_modifier()} };
+    },
+    "dns-search=s"        => sub {
+        push @dns_searches, { value => check_arg(@_, 'fqdn'), %{get_modifier()} };
+    },
+    "dns-servers=s{1,}"   => sub {
+        my ($opt, @values) = @_;
+        push @dns_servers, { value => [@values], %{get_modifier()} };
+    },
+    "image-servers=s{1,}" => sub {
+        my ($opt, @values) = @_;
+        push @image_servers, { value => [@values], %{get_modifier()} };
+    },
+    "boot-servers=s{1,}"  => sub {
+        my ($opt, @values) = @_;
+        push @boot_servers, { value => [@values], %{get_modifier()} };
+    },
+    "log-servers=s{1,}"   => sub {
+        my ($opt, @values) = @_;
+        push @log_servers, { value => [@values], %{get_modifier()} };
+    },
+    "log-server-port=i"   => sub {
+        my ($opt, $value) = @_;
+        push @log_server_ports, { value => $value, %{get_modifier()} };
+    },
+    "ssh-download-url=s"  => sub {
+        my ($opt, $value) = @_;
+        push @ssh_download_urls, { value => $value, %{get_modifier()} };
+    },
+    "flamethrower-port-base=i" => sub {
+        my ($opt, $value) = @_;
+        push @flamethrower_port_bases, { value => $value, %{get_modifier()} };
+    },
+    "staging-dir=s"       => sub {
+        my ($opt, $value) = @_;
+        my $entry = { value => $value, %{get_modifier()} };
+        push @staging_dir, $entry;
+    },
+    "subnet=s"            => sub {
+        my ($opt, $value) = @_;
+        unless ($value =~ m|^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}$|) {
+            die "--$opt: Invalid subnet format: $value\n";
+        }
+    },
+    "client=s"            => sub {
+        my ($opt, $value) = @_;
+        unless ($value =~ m{^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2})$}) {
+            die "--$opt: Invalid client format (must be FQDN, IPv4, or MAC): $value\n";
+        }
+    },
+    "list-subnets"        => \$list_subnets,
+    "list-pools"          => \$list_pools,
+    "list-clients"        => \$list_clients,
+    "csv"                 => \$csv,
+) or pod2usage(1);
 
-# Affichage de l'aide si demandée
+# Manual parsing of remaining command line options
+#my $option = "";
+#while (@ARGV) {
+#    $option = shift @ARGV if $ARGV[0] =~ /^--/;
+#    print "got option: $option\n" if $debug >= 1
+#
+#}
+
+
+# Validate options
+if ($quiet && ($help || $man || $debug)) {
+    die "--quiet: is incompatible with --help, --man or --debug\n";
+}
+
 if ($help) {
-    print_usage();
-    exit 0;
+   pod2usage(-verbose => 1,
+             -exitval => 0);
 }
 
-# Vérifier si des options de modification sont présentes
-my $has_modifications = @add_networks || @del_networks || @add_clients || @del_clients;
+if ($man) {
+    pod2usage(-verbose => 2,
+              -exitval => 0);
+}
 
-# Vérifier si le fichier de configuration est accessible en écriture
-$config_file ||= '/etc/kea/kea-dhcp4.conf';
-my $config_dir = File::Spec->catdir(File::Spec->splitpath($config_file))[1];
-if ($has_modifications) {
+if (!@add_subnets && !@del_subnets && !@add_pools && !@del_pools && !@add_clients && !@del_clients &&
+    !@dns_domains && !@dns_searches && !@dns_servers && !@image_servers && !@boot_servers &&
+    !@log_servers && !@log_server_ports && !@ssh_download_urls && !@flamethrower_port_bases &&
+    !@staging_dir && !$list_subnets && !$list_pools && !$list_clients) {
+    print STDERR "Error: At least one action option is required\n";
+    pod2usage(1);
+    exit 1;
+}
+
+# Validate file permissions
+my $needs_write = (@add_subnets || @del_subnets || @add_pools || @del_pools || @add_clients || @del_clients ||
+                   @dns_domains || @dns_searches || @dns_servers || @image_servers || @boot_servers ||
+                   @log_servers || @log_server_ports || @ssh_download_urls || @flamethrower_port_bases ||
+                   @staging_dir);
+if ($needs_write) {
     if (-e $config_file) {
-        die "Erreur: Impossible d'écrire dans $config_file : fichier non accessible en écriture\n" unless -w $config_file;
+        unless (-w $config_file) {
+            print STDERR "Error: Configuration file '$config_file' is not writable\n" unless $quiet;
+            exit 1;
+        }
     } else {
-        die "Erreur: Répertoire $config_dir n'existe pas ou n'est pas accessible en écriture\n" unless -d $config_dir && -w $config_dir;
-    }
-}
-
-# Vérifier si kea-dhcp4 est installé (avertissement non bloquant)
-if (system("which kea-dhcp4 >/dev/null 2>&1") != 0) {
-    print "Avertissement : kea-dhcp4 n'est pas installé. La configuration générée ne pourra pas être utilisée immédiatement.\n";
-}
-
-# Charger la configuration
-my ($config, $config_exists) = SystemImager::KeaConfUtils::load_kea_config($config_file, $debug);
-if (!$config_exists && !@add_networks && !@add_clients && !@del_clients && !@del_networks && !($list_clients || $list_pools || $list_subnets)) {
-    die "L'option --add-network est requise pour créer une nouvelle configuration\n";
-}
-
-# Obtenir l'adresse IP locale si nécessaire
-my $local_ip = ($has_modifications || $list_subnets || $list_pools || $list_clients) ? SystemImager::IpUtils::get_local_ip(@add_networks, $config) : undef;
-
-# Gestion des options de listage
-if ($list_clients || $list_pools || $list_subnets) {
-    if ($list_clients) {
-        SystemImager::KeaConfUtils::list_clients($config, $csv, $debug);
-    }
-    if ($list_pools) {
-        SystemImager::KeaConfUtils::list_pools($config, $csv, $debug);
-    }
-    if ($list_subnets) {
-        SystemImager::KeaConfUtils::list_networks($config, $csv, $debug);
-    }
-    exit 0 unless $has_modifications;
-}
-
-# Gestion du domaine DNS par défaut
-unless ($dns_domain) {
-    if (-r '/etc/resolv.conf') {
-        open my $resolv, '<', '/etc/resolv.conf' or die "Impossible d'ouvrir /etc/resolv.conf: $!\n";
-        while (<$resolv>) {
-            if (/^domain\s+(\S+)/) {
-                $dns_domain = $1;
-                last;
-            }
+        my $dir = File::Spec->catdir((File::Spec->splitpath($config_file))[0,1]);
+        unless (-e $dir) {
+            die "--file : directory '$dir' does not exists\n" unless $quiet;
+            exit 1;
         }
-        close $resolv;
-    }
-}
-
-# Gestion des serveurs par défaut
-$image_server = $local_ip unless $image_server;
-$boot_server = $local_ip unless $boot_server;
-
-# Gestion de ssh-download-url
-if (defined $ssh_download_url && $ssh_download_url eq '') {
-    $ssh_download_url = "ssh://$image_server/var/lib/systemimager/images";
-}
-
-# Gestion de flamethrower-port-base
-if (defined $flamethrower_port_base && $flamethrower_port_base == 0) {
-    $flamethrower_port_base = 8000;
-}
-
-# Validation des serveurs DNS
-if (@dns_servers) {
-    @dns_servers = split(/\s+/, join(' ', @dns_servers));
-    foreach my $dns (@dns_servers) {
-        die "Serveur DNS invalide: $dns\n" unless SystemImager::IpUtils::valid_ip($dns) || SystemImager::IpUtils::valid_fqdn($dns);
-    }
-}
-
-# Validation de l'image-server et boot-server
-die "image-server invalide: $image_server\n" unless SystemImager::IpUtils::valid_ip($image_server) || SystemImager::IpUtils::valid_fqdn($image_server);
-die "boot-server invalide: $boot_server\n" unless SystemImager::IpUtils::valid_ip($boot_server) || SystemImager::IpUtils::valid_fqdn($boot_server);
-
-# Validation de log-server
-if ($log_server) {
-    die "log-server invalide: $log_server\n" unless SystemImager::IpUtils::valid_ip($log_server) || SystemImager::IpUtils::valid_fqdn($log_server);
-}
-
-# Validation de log-server-port
-if (defined $log_server_port) {
-    die "log-server-port doit être un entier entre 1 et 65535\n" unless $log_server_port >= 1 && $log_server_port <= 65535;
-}
-
-# Ajouter les réseaux
-if (@add_networks) {
-    foreach my $i (0 .. $#add_networks / 3) {
-        my ($net, $ip_start, $ip_end) = @add_networks[$i*3 .. $i*3+2];
-        unless (defined $net && $net ne '') {
-            print "Erreur: Paramètre réseau manquant pour --add-network\n";
-            next;
-        }
-        SystemImager::KeaConfUtils::add_network($config, $net, $ip_start, $ip_end, $debug) or next;
-    }
-}
-
-# Supprimer les réseaux
-my %existing_subnets;
-if (exists $config->{"Dhcp4"}->{"subnet4"}) {
-    %existing_subnets = map { $_->{"subnet"} => $_ } @{$config->{"Dhcp4"}->{"subnet4"}};
-}
-
-my @deleted_subnets;
-my @deleted_reservations;
-if (@del_networks) {
-    foreach my $i (0 .. $#del_networks / 2) {
-        my ($net, $force) = @del_networks[$i*2 .. $i*2+1];
-        my ($ip, $mask) = split('/', $net);
-        die "Format réseau invalide: $net\n" unless SystemImager::IpUtils::valid_ip($ip) && $mask =~ /^\d+$/ && $mask >= 0 && $mask <= 32;
-        $force = (defined $force && $force eq '--force') ? 1 : 0;
-
-        unless (exists $existing_subnets{$net}) {
-            print "Erreur: Le sous-réseau $net n'existe pas dans la configuration\n";
-            next;
-        }
-
-        # Vérifier les réservations dans le sous-réseau
-        my @conflicting_reservations;
-        my @remaining_global_reservations;
-        $config->{"Dhcp4"}->{"reservations"} ||= [];
-        foreach my $reservation (@{$config->{"Dhcp4"}->{"reservations"}}) {
-            if ($reservation->{'ip-address'} && SystemImager::IpUtils::is_ip_in_network($reservation->{'ip-address'}, $mask, $ip, $mask)) {
-                push @conflicting_reservations, $reservation;
-            } else {
-                push @remaining_global_reservations, $reservation;
-            }
-        }
-
-        if (@conflicting_reservations && !$force) {
-            print "Erreur: Impossible de supprimer le sous-réseau $net car il contient des réservations :\n";
-            foreach my $res (@conflicting_reservations) {
-                print "  - ", ($res->{"hostname"} || $res->{'hw-address'} || $res->{'ip-address'}), "\n";
-            }
-            print "Utilisez --force pour supprimer le sous-réseau et ses réservations.\n";
-            next;
-        }
-
-        # Supprimer le sous-réseau
-        $config->{"Dhcp4"}->{"subnet4"} = [ grep { $_->{"subnet"} ne $net } @{$config->{"Dhcp4"}->{"subnet4"}} ];
-        push @deleted_subnets, $net;
-
-        # Supprimer les réservations si --force
-        if ($force && @conflicting_reservations) {
-            push @deleted_reservations, map { $_->{"hostname"} || $_->{'hw-address'} || $_->{'ip-address'} } @conflicting_reservations;
-            $config->{"Dhcp4"}->{"reservations"} = \@remaining_global_reservations;
+        unless (-w $dir) {
+            die "--file : Cannot create configuration file '$config_file' in directory '$dir'. Needs write permission\n" unless $quiet;
+            exit 1;
         }
     }
-
-    if (@deleted_subnets) {
-        print "Sous-réseau(s) supprimé(s) : ", join(", ", @deleted_subnets), "\n";
-        if (@deleted_reservations) {
-            print "Réservation(s) supprimée(s) : ", join(", ", @deleted_reservations), "\n";
-        }
-    }
-}
-
-# Ajouter les clients
-if (@add_clients) {
-    foreach my $i (0 .. $#add_clients / 3) {
-        my ($name, $mac, $ip) = @add_clients[$i*3 .. $i*3+2];
-        SystemImager::KeaConfUtils::add_client($config, $name, $mac, $ip, $global, $debug) or next;
-    }
-}
-
-# Supprimer les clients
-my $deleted_count = 0;
-my @deleted_clients;
-if (@del_clients) {
-    my @remaining_global_reservations;
-    $config->{"Dhcp4"}->{"reservations"} ||= [];
-    foreach my $reservation (@{$config->{"Dhcp4"}->{"reservations"}}) {
-        my $keep = 1;
-        foreach my $criterion (@del_clients) {
-            $criterion =~ s/\*/.*/g;
-            if (($reservation->{"hostname"} && $reservation->{"hostname"} =~ /^$criterion$/) ||
-                ($reservation->{'hw-address'} && $reservation->{'hw-address'} =~ /^$criterion$/i) ||
-                ($reservation->{'ip-address'} && $reservation->{'ip-address'} =~ /^$criterion$/)) {
-                $keep = 0;
-                $deleted_count++;
-                push @deleted_clients, $reservation->{"hostname"} || $reservation->{'hw-address'} || $reservation->{'ip-address'};
-            }
-        }
-        push @remaining_global_reservations, $reservation if $keep;
-    }
-    $config->{"Dhcp4"}->{"reservations"} = \@remaining_global_reservations;
-
-    if (exists $config->{"Dhcp4"}->{"subnet4"}) {
-        foreach my $subnet (@{$config->{"Dhcp4"}->{"subnet4"}}) {
-            next unless exists $subnet->{"reservations"};
-            my @remaining_subnet_reservations;
-            foreach my $reservation (@{$subnet->{"reservations"}}) {
-                my $keep = 1;
-                foreach my $criterion (@del_clients) {
-                    $criterion =~ s/\*/.*/g;
-                    if (($reservation->{"hostname"} && $reservation->{"hostname"} =~ /^$criterion$/) ||
-                        ($reservation->{'hw-address'} && $reservation->{'hw-address'} =~ /^$criterion$/i) ||
-                        ($reservation->{'ip-address'} && $reservation->{'ip-address'} =~ /^$criterion$/)) {
-                        $keep = 0;
-                        $deleted_count++;
-                        push @deleted_clients, $reservation->{"hostname"} || $reservation->{'hw-address'} || $reservation->{'ip-address'};
-                    }
-                }
-                push @remaining_subnet_reservations, $reservation if $keep;
-            }
-            $subnet->{"reservations"} = \@remaining_subnet_reservations;
-        }
-    }
-
-    if ($deleted_count > 0) {
-        print "Supprimé $deleted_count client(s) : ", join(", ", @deleted_clients), "\n";
-    } else {
-        print "Aucun client supprimé\n";
-    }
-}
-
-# Vérifier les doublons d'ID
-my %id_check;
-if (exists $config->{"Dhcp4"}->{"subnet4"}) {
-    foreach my $subnet (@{$config->{"Dhcp4"}->{"subnet4"}}) {
-        die "Erreur: ID de sous-réseau dupliqué : $subnet->{id} pour $subnet->{subnet}\n" if exists $id_check{$subnet->{"id"}};
-        $id_check{$subnet->{"id"}} = 1;
-    }
-}
-
-# Si aucune modification n'est demandée et aucun sous-réseau n'existe
-if (!@add_networks && !@add_clients && !@del_clients && !@del_networks && !exists $config->{"Dhcp4"}->{"subnet4"}) {
-    die "Aucun sous-réseau défini et aucune modification demandée\n";
-}
-
-# Mettre à jour les interfaces
-if (exists $config->{"Dhcp4"}->{"subnet4"} && @{$config->{"Dhcp4"}->{"subnet4"}}) {
-    my @all_networks = map { $_->{"subnet"} } @{$config->{"Dhcp4"}->{"subnet4"}};
-    $config->{"Dhcp4"}->{"interfaces-config"} = {
-        "interfaces" => [ SystemImager::IpUtils::get_network_interfaces(@all_networks) ]
-    };
 } else {
-    $config->{"Dhcp4"}->{"interfaces-config"} = {
-        "interfaces" => []
-    };
-}
-
-# Mettre à jour la base de données de leases
-$config->{"Dhcp4"}->{"lease-database"} = {
-    "type" => "memfile",
-    "persist" => JSON::PP::true,
-    "name" => "/var/lib/kea/dhcp4.leases"
-};
-
-# Mettre à jour ou ajouter les classes de clients
-my @client_classes = (
-    {
-        "name" => "IA32_UEFI",
-        "test" => "option[93].hex == 0x0006",
-        "option-data" => [
-            {
-                "name" => "boot-file-name",
-                "code" => 67,
-                "space" => "dhcp4",
-                "data" => "bootia32.efi"
-            }
-        ]
-    },
-    {
-        "name" => "X64_UEFI",
-        "test" => "option[93].hex == 0x0007",
-        "option-data" => [
-            {
-                "name" => "boot-file-name",
-                "code" => 67,
-                "space" => "dhcp4",
-                "data" => "grubx64.efi"
-            }
-        ]
-    },
-    {
-        "name" => "ARM64_UEFI",
-        "test" => "option[93].hex == 0x000B",
-        "option-data" => [
-            {
-                "name" => "boot-file-name",
-                "code" => 67,
-                "space" => "dhcp4",
-                "data" => "grubaa64.efi"
-            }
-        ]
-    },
-    {
-        "name" => "PXE_LEGACY",
-        "test" => "option[93].hex == 0x0000",
-        "option-data" => [
-            {
-                "name" => "boot-file-name",
-                "code" => 67,
-                "space" => "dhcp4",
-                "data" => "pxelinux.0"
-            }
-        ]
+    unless (-e $config_file) {
+        die "--file: Configuration file '$config_file' does not exists\n" unless $quiet;
+        exit 1;
     }
-);
-
-# Préserver les classes existantes
-my %existing_classes;
-if (exists $config->{"Dhcp4"}->{"client-classes"}) {
-    foreach my $class (@{$config->{"Dhcp4"}->{"client-classes"}}) {
-        next unless defined $class->{"name"};
-        $existing_classes{$class->{"name"}} = $class unless grep { defined $_->{"name"} && $_->{"name"} eq $class->{"name"} } @client_classes;
+    unless (-r $config_file) {
+        die "--file: Configuration file '$config_file' is not readable\n" unless $quiet;
+        exit 1;
     }
 }
-$config->{"Dhcp4"}->{"client-classes"} = [
-    @client_classes,
-    values %existing_classes
-];
 
-# Mettre à jour les définitions d'options
-my @option_def = (
-    {
-        "name" => "image-server",
-        "code" => 200,
-        "type" => "ipv4-address",
-        "space" => "dhcp4"
-    },
-    ($log_server ? {
-        "name" => "log-server",
-        "code" => 201,
-        "type" => SystemImager::IpUtils::valid_ip($log_server) ? "ipv4-address" : "string",
-        "space" => "dhcp4"
-    } : ()),
-    ($log_server_port ? {
-        "name" => "log-server-port",
-        "code" => 202,
-        "type" => "uint16",
-        "space" => "dhcp4"
-    } : ()),
-    (defined $ssh_download_url ? {
-        "name" => "ssh-download-url",
-        "code" => 203,
-        "type" => "string",
-        "space" => "dhcp4"
-    } : ()),
-    (defined $flamethrower_port_base ? {
-        "name" => "flamethrower-port-base",
-        "code" => 204,
-        "type" => "uint16",
-        "space" => "dhcp4"
-    } : ()),
-    ($staging_dir ? {
-        "name" => "staging-dir",
-        "code" => 205,
-        "type" => "string",
-        "space" => "dhcp4"
-    } : ())
-);
+# Load or initialize configuration
+print "Calling load_kea_config\n" if $debug >= 2;
+my ($config, $changelog) = SystemImager::KeaConfUtils::load_kea_config($config_file, $debug);
+unless ($config) {
+    print "Calling init_kea_config\n" if $debug >= 2;
+    $config = SystemImager::KeaConfUtils::init_kea_config();
+    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S kea-dhcp4.conf generated from scratch by si_mkdhcpserver", localtime);
+}
 
-# Préserver les définitions d'options existantes
-my %existing_option_def;
-if (exists $config->{"Dhcp4"}->{"option-def"}) {
-    foreach my $def (@{$config->{"Dhcp4"}->{"option-def"}}) {
-        next unless defined $def->{"name"};
-        $existing_option_def{$def->{"name"}} = $def unless grep { defined $_->{"name"} && $_->{"name"} eq $def->{"name"} } @option_def;
+# Process modification options
+
+# Process --add-subnet option
+my $modified = 0;
+foreach my $subnet (@add_subnets) {
+    my ($ip, $mask) = split /\//, $subnet;
+    unless (valid_ip($ip) && $mask =~ /^\d+$/ && $mask >= 0 && $mask <= 32) {
+        print STDERR "Error: Invalid subnet format: $subnet\n" unless $quiet;
+        exit 1;
+    }
+    print "Calling add_subnet($subnet)\n" if $debug >= 2;
+    my ($success, $msg) = SystemImager::KeaConfUtils::add_subnet($config, $subnet);
+    unless ($success) {
+        print STDERR "Error: $msg\n" unless $quiet;
+        exit 1;
+    }
+    print "$msg\n" unless $quiet;
+    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
+    $modified = 1;
+}
+
+# Process --del-subnet option
+foreach my $subnet (@del_subnets) {
+    my ($ip, $mask) = split /\//, $subnet;
+    unless (valid_ip($ip) && $mask =~ /^\d+$/ && $mask >= 0 && $mask <= 32) {
+        print STDERR "Error: Invalid subnet format: $subnet\n" unless $quiet;
+        exit 1;
+    }
+    print "Calling del_subnet($subnet, $force)\n" if $debug >= 2;
+    my ($success, $msg) = SystemImager::KeaConfUtils::del_subnet($config, $subnet, $force);
+    unless ($success) {
+        print STDERR "Error: $msg\n" unless $quiet;
+        exit 1;
+    }
+    print "$msg\n" unless $quiet;
+    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
+    $modified = 1;
+}
+
+# Process --add-pool options
+while (@add_pools) {
+    my ($start_ip, $end_ip) = splice(@add_pools, 0, 2);
+    print "Calling add_pool($start_ip, $end_ip)\n" if $debug >= 2;
+    my ($success, $msg) = SystemImager::KeaConfUtils::add_pool($config, $start_ip, $end_ip);
+    unless ($success) {
+        print STDERR "Error: $msg\n" unless $quiet;
+        exit 1;
+    }
+    print "$msg\n" unless $quiet;
+    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
+    $modified = 1;
+}
+
+# Process --del-pool options
+while (@del_pools) {
+    my ($start_ip, $end_ip) = splice(@del_pools, 0, 2);
+    print "Calling del_pool($start_ip, $end_ip)\n" if $debug >= 2;
+    my ($success, $msg) = SystemImager::KeaConfUtils::del_pool($config, $start_ip, $end_ip);
+    unless ($success) {
+        print STDERR "Error: $msg\n" unless $quiet;
+        exit 1;
+    }
+    print "$msg\n" unless $quiet;
+    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
+    $modified = 1;
+}
+
+# Process --add-client options
+while (@add_clients >= 3) {
+    my $name = shift @add_clients;
+    my $mac = shift @add_clients;
+    my $ip = shift @add_clients;
+    my $global = (@add_clients && $add_clients[0] eq "--global") ? shift @add_clients : undef;
+	check_arg("add-client",$name, 'fqdn');
+	check_arg("add-client",$mac, 'mac');
+	check_arg("add-client",$ip, 'ip');
+    print "Calling add_client($name, $mac, $ip, ", ($global ? "global" : "subnet"), ")\n" if $debug >= 2;
+    my ($success, $msg) = SystemImager::KeaConfUtils::add_client($config, $name, $mac, $ip, $global);
+    die "Error: $msg" unless ($success);
+    print "$msg\n" unless $quiet;
+    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
+    $modified = 1;
+}
+
+foreach my $client (@del_clients) {
+    my ($identifier) = @$client;
+    print "Calling del_client($identifier)\n" if $debug >= 2;
+    my ($success, $msg) = SystemImager::KeaConfUtils::del_client($config, $identifier);
+    unless ($success) {
+        print STDERR "Error: $msg\n" unless $quiet;
+        exit 1;
+    }
+    print "$msg\n" unless $quiet;
+    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
+    $modified = 1;
+}
+
+# Process --dns-domain options
+foreach my $entry (@dns_domains) {
+    my $domain = $entry->{value};
+    my $modifier = $entry->{modifier};
+    my $modifier_value = $entry->{modifier_value};
+    unless ($domain =~ m|^[a-zA-Z0-9.-]+$|) {
+        print STDERR "Error: Invalid domain format: $domain\n" unless $quiet;
+        exit 1;
+    }
+    my ($success, $msg);
+    if ($modifier eq "--subnet") {
+        print "Calling set_option(domain-name, $domain, $modifier_value)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "domain-name", $domain, $modifier_value);
+    } elsif ($modifier eq "--client") {
+        print "Calling set_client_option($modifier_value, domain-name, $domain)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_client_option($config, $modifier_value, "domain-name", $domain);
+    } else {
+        print "Calling set_option(domain-name, $domain, global)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "domain-name", $domain);
+    }
+    unless ($success) {
+        print STDERR "Error: $msg\n" unless $quiet;
+        exit 1;
+    }
+    print "$msg\n" unless $quiet;
+    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
+    $modified = 1;
+}
+
+# Process --dns-search options
+foreach my $entry (@dns_searches) {
+    my $search = $entry->{value};
+    my $modifier = $entry->{modifier};
+    my $modifier_value = $entry->{modifier_value};
+    unless ($search =~ m|^[a-zA-Z0-9.-]+$|) {
+        print STDERR "Error: Invalid search domain format: $search\n" unless $quiet;
+        exit 1;
+    }
+    my ($success, $msg);
+    if ($modifier eq "--subnet") {
+        print "Calling set_option(domain-search, $search, $modifier_value)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "domain-search", $search, $modifier_value);
+    } elsif ($modifier eq "--client") {
+        print "Calling set_client_option($modifier_value, domain-search, $search)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_client_option($config, $modifier_value, "domain-search", $search);
+    } else {
+        print "Calling set_option(domain-search, $search, global)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "domain-search", $search);
+    }
+    unless ($success) {
+        print STDERR "Error: $msg\n" unless $quiet;
+        exit 1;
+    }
+    print "$msg\n" unless $quiet;
+    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
+    $modified = 1;
+}
+
+# Process --dns-servers options
+foreach my $entry (@dns_servers) {
+    my $ips = $entry->{value}; # Array reference
+    my $modifier = $entry->{modifier};
+    my $modifier_value = $entry->{modifier_value};
+    foreach my $ip (@$ips) {
+        unless (valid_ip($ip)) {
+            print STDERR "Error: Invalid IP format: $ip\n" unless $quiet;
+            exit 1;
+        }
+    }
+    my $csv_value = join(",", @$ips); # Create CSV string
+    my ($success, $msg);
+    if ($modifier eq "--subnet") {
+        print "Calling set_option(domain-name-servers, $csv_value, $modifier_value)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "domain-name-servers", $csv_value, $modifier_value);
+    } elsif ($modifier eq "--client") {
+        print "Calling set_client_option($modifier_value, domain-name-servers, $csv_value)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_client_option($config, $modifier_value, "domain-name-servers", $csv_value);
+    } else {
+        print "Calling set_option(domain-name-servers, $csv_value, global)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "domain-name-servers", $csv_value);
+    }
+    unless ($success) {
+        print STDERR "Error: $msg\n" unless $quiet;
+        exit 1;
+    }
+    print "$msg\n" unless $quiet;
+    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
+    $modified = 1;
+}
+
+# Process --image-servers options
+foreach my $entry (@image_servers) {
+    my $ips = $entry->{value}; # Array reference
+    my $modifier = $entry->{modifier};
+    my $modifier_value = $entry->{modifier_value};
+    foreach my $ip (@$ips) {
+        unless (valid_ip($ip)) {
+            print STDERR "Error: Invalid IP format: $ip\n" unless $quiet;
+            exit 1;
+        }
+    }
+    my $csv_value = join(",", @$ips); # Create CSV string
+    my ($success, $msg);
+    if ($modifier eq "--subnet") {
+        print "Calling set_option(image-servers, $csv_value, $modifier_value)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "image-servers", $csv_value, $modifier_value);
+    } elsif ($modifier eq "--client") {
+        print "Calling set_client_option($modifier_value, image-servers, $csv_value)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_client_option($config, $modifier_value, "image-servers", $csv_value);
+    } else {
+        print "Calling set_option(image-servers, $csv_value, global)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "image-servers", $csv_value);
+    }
+    unless ($success) {
+        print STDERR "Error: $msg\n" unless $quiet;
+        exit 1;
+    }
+    print "$msg\n" unless $quiet;
+    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
+    $modified = 1;
+}
+
+# Process --boot-servers options
+foreach my $entry (@boot_servers) {
+    my $ips = $entry->{value}; # Array reference
+    my $modifier = $entry->{modifier};
+    my $modifier_value = $entry->{modifier_value};
+    foreach my $ip (@$ips) {
+        unless (valid_ip($ip)) {
+            print STDERR "Error: Invalid IP format: $ip\n" unless $quiet;
+            exit 1;
+        }
+    }
+    my $csv_value = join(",", @$ips); # Create CSV string
+    my ($success, $msg);
+    if ($modifier eq "--subnet") {
+        print "Calling set_option(boot-servers, $csv_value, $modifier_value)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "boot-servers", $csv_value, $modifier_value);
+    } elsif ($modifier eq "--client") {
+        print "Calling set_client_option($modifier_value, boot-servers, $csv_value)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_client_option($config, $modifier_value, "boot-servers", $csv_value);
+    } else {
+        print "Calling set_option(boot-servers, $csv_value, global)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "boot-servers", $csv_value);
+    }
+    unless ($success) {
+        print STDERR "Error: $msg\n" unless $quiet;
+        exit 1;
+    }
+    print "$msg\n" unless $quiet;
+    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
+    $modified = 1;
+}
+
+# Process --log-servers options
+foreach my $entry (@log_servers) {
+    my $ips = $entry->{value}; # Array reference
+    my $modifier = $entry->{modifier};
+    my $modifier_value = $entry->{modifier_value};
+    foreach my $ip (@$ips) {
+        unless (valid_ip($ip)) {
+            print STDERR "Error: Invalid IP format: $ip\n" unless $quiet;
+            exit 1;
+        }
+    }
+    my $csv_value = join(",", @$ips); # Create CSV string
+    my ($success, $msg);
+    if ($modifier eq "--subnet") {
+        print "Calling set_option(log-servers, $csv_value, $modifier_value)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "log-servers", $csv_value, $modifier_value);
+    } elsif ($modifier eq "--client") {
+        print "Calling set_client_option($modifier_value, log-servers, $csv_value)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_client_option($config, $modifier_value, "log-servers", $csv_value);
+    } else {
+        print "Calling set_option(log-servers, $csv_value, global)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "log-servers", $csv_value);
+    }
+    unless ($success) {
+        print STDERR "Error: $msg\n" unless $quiet;
+        exit 1;
+    }
+    print "$msg\n" unless $quiet;
+    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
+    $modified = 1;
+}
+
+# Process --log-server-port options
+foreach my $entry (@log_server_ports) {
+    my $port = $entry->{value};
+    my $modifier = $entry->{modifier};
+    my $modifier_value = $entry->{modifier_value};
+    unless ($port =~ m|^\d+$| && $port >= 0 && $port <= 65535) {
+        print STDERR "Error: Invalid port format: $port (must be 0-65535)\n" unless $quiet;
+        exit 1;
+    }
+    my ($success, $msg);
+    if ($modifier eq "--subnet") {
+        print "Calling set_option(log-server-port, $port, $modifier_value)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "log-server-port", $port, $modifier_value);
+    } elsif ($modifier eq "--client") {
+        print "Calling set_client_option($modifier_value, log-server-port, $port)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_client_option($config, $modifier_value, "log-server-port", $port);
+    } else {
+        print "Calling set_option(log-server-port, $port, global)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "log-server-port", $port);
+    }
+    unless ($success) {
+        print STDERR "Error: $msg\n" unless $quiet;
+        exit 1;
+    }
+    print "$msg\n" unless $quiet;
+    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
+    $modified = 1;
+}
+
+# Process --ssh-download-url options
+foreach my $entry (@ssh_download_urls) {
+    my $url = $entry->{value};
+    my $modifier = $entry->{modifier};
+    my $modifier_value = $entry->{modifier_value};
+    unless ($url =~ m|^/(?:[a-zA-Z0-9._-][a-zA-Z0-9._-]*(?:/[a-zA-Z0-9._-][a-zA-Z0-9._-]*)*)?$|) {
+        print STDERR "Error: Invalid URL path format: $url\n" unless $quiet;
+        exit 1;
+    }
+    my ($success, $msg);
+    if ($modifier eq "--subnet") {
+        print "Calling set_option(ssh-download-url, $url, $modifier_value)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "ssh-download-url", $url, $modifier_value);
+    } elsif ($modifier eq "--client") {
+        print "Calling set_client_option($modifier_value, ssh-download-url, $url)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_client_option($config, $modifier_value, "ssh-download-url", $url);
+    } else {
+        print "Calling set_option(ssh-download-url, $url, global)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "ssh-download-url", $url);
+    }
+    unless ($success) {
+        print STDERR "Error: $msg\n" unless $quiet;
+        exit 1;
+    }
+    print "$msg\n" unless $quiet;
+    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
+    $modified = 1;
+}
+
+# Process --flamethrower-port-base options
+foreach my $entry (@flamethrower_port_bases) {
+    my $port = $entry->{value};
+    my $modifier = $entry->{modifier};
+    my $modifier_value = $entry->{modifier_value};
+    unless ($port =~ m|^\d+$| && $port >= 0 && $port <= 65535) {
+        print STDERR "Error: Invalid port format: $port (must be 0-65535)\n" unless $quiet;
+        exit 1;
+    }
+    my ($success, $msg);
+    if ($modifier eq "--subnet") {
+        print "Calling set_option(flamethrower-port-base, $port, $modifier_value)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "flamethrower-port-base", $port, $modifier_value);
+    } elsif ($modifier eq "--client") {
+        print "Calling set_client_option($modifier_value, flamethrower-port-base, $port)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_client_option($config, $modifier_value, "flamethrower-port-base", $port);
+    } else {
+        print "Calling set_option(flamethrower-port-base, $port, global)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "flamethrower-port-base", $port);
+    }
+    unless ($success) {
+        print STDERR "Error: $msg\n" unless $quiet;
+        exit 1;
+    }
+    print "$msg\n" unless $quiet;
+    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
+    $modified = 1;
+}
+
+# Process --staging-dir options
+foreach my $entry (@staging_dir) {
+    my $path = $entry->{value};
+    my $modifier = $entry->{modifier};
+    my $modifier_value = $entry->{modifier_value};
+    unless ($path =~ m|^/(?:[a-zA-Z0-9._-][a-zA-Z0-9._-]*(?:/[a-zA-Z0-9._-][a-zA-Z0-9._-]*)*)?$|) {
+        print STDERR "Error: Invalid path format: $path\n" unless $quiet;
+        exit 1;
+    }
+    my ($success, $msg);
+    if ($modifier eq "--subnet") {
+        print "Calling set_option(tmpfs-staging, $path, $modifier_value)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "tmpfs-staging", $path, $modifier_value);
+    } elsif ($modifier eq "--client") {
+        print "Calling set_client_option($modifier_value, tmpfs-staging, $path)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_client_option($config, $modifier_value, "tmpfs-staging", $path);
+    } else {
+        print "Calling set_option(tmpfs-staging, $path, global)\n" if $debug >= 2;
+        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "tmpfs-staging", $path);
+    }
+    unless ($success) {
+        print STDERR "Error: $msg\n" unless $quiet;
+        exit 1;
+    }
+    print "$msg\n" unless $quiet;
+    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
+    $modified = 1;
+}
+
+# Write configuration if modified
+if ($modified) {
+    print "Calling write_kea_config\n" if $debug >= 2;
+    unless (SystemImager::KeaConfUtils::write_kea_config($config_file, $config, $changelog, $debug)) {
+        print STDERR "Error: Failed to write configuration file\n" unless $quiet;
+        exit 1;
+    }
+    # Reload configuration to ensure consistency
+    print "Reloading configuration after modification\n" if $debug >= 1;
+    ($config, $changelog) = SystemImager::KeaConfUtils::load_kea_config($config_file, $debug);
+    unless ($config) {
+        print STDERR "Error: Failed to reload configuration after writing\n" unless $quiet;
+        exit 1;
     }
 }
-$config->{"Dhcp4"}->{"option-def"} = [
-    @option_def,
-    values %existing_option_def
-];
 
-# Mettre à jour les données d'options
-my @option_data = (
-    ($dns_domain ? { 
-        "name" => "domain-name", 
-        "code" => 15,
-        "space" => "dhcp4",
-        "data" => $dns_domain 
-    } : ()),
-    (@dns_servers ? { 
-        "name" => "domain-name-servers", 
-        "code" => 6,
-        "space" => "dhcp4",
-        "data" => join(',', @dns_servers) 
-    } : ()),
-    { 
-        "name" => "boot-file-name", 
-        "code" => 67,
-        "space" => "dhcp4",
-        "data" => "pxelinux.0" 
-    },
-    { 
-        "name" => "tftp-server-name", 
-        "code" => 66,
-        "space" => "dhcp4",
-        "data" => $boot_server 
-    },
-    { 
-        "name" => "image-server", 
-        "space" => "dhcp4",
-        "data" => $image_server 
-    },
-    ($log_server ? { 
-        "name" => "log-server", 
-        "space" => "dhcp4",
-        "data" => $log_server 
-    } : ()),
-    ($log_server_port ? { 
-        "name" => "log-server-port", 
-        "space" => "dhcp4",
-        "data" => "$log_server_port" 
-    } : ()),
-    (defined $ssh_download_url ? { 
-        "name" => "ssh-download-url", 
-        "space" => "dhcp4",
-        "data" => $ssh_download_url 
-    } : ()),
-    (defined $flamethrower_port_base ? { 
-        "name" => "flamethrower-port-base", 
-        "space" => "dhcp4",
-        "data" => "$flamethrower_port_base" 
-    } : ()),
-    ($staging_dir ? { 
-        "name" => "staging-dir", 
-        "space" => "dhcp4",
-        "data" => $staging_dir 
-    } : ())
-);
+# Process list options
+$csv = 1 if $quiet && ($list_subnets || $list_pools || $list_clients);
 
-# Préserver les options existantes
-my %existing_option_data;
-if (exists $config->{"Dhcp4"}->{"option-data"}) {
-    foreach my $opt (@{$config->{"Dhcp4"}->{"option-data"}}) {
-        next unless defined $opt->{"name"};
-        $existing_option_data{$opt->{"name"}} = $opt unless grep { defined $_->{"name"} && $_->{"name"} eq $opt->{"name"} } @option_data;
-    }
+if ($list_subnets) {
+    print "Calling list_subnets\n" if $debug >= 2;
+    SystemImager::KeaConfUtils::list_subnets($config, $csv, $quiet);
 }
-$config->{"Dhcp4"}->{"option-data"} = [
-    @option_data,
-    values %existing_option_data
-];
-
-# Écrire la configuration si des modifications ont été demandées
-if ($has_modifications) {
-    SystemImager::KeaConfUtils::write_kea_config($config, $config_file);
+if ($list_pools) {
+    print "Calling list_pools\n" if $debug >= 2;
+    SystemImager::KeaConfUtils::list_pools($config, $csv, $quiet);
+}
+if ($list_clients) {
+    print "Calling list_clients\n" if $debug >= 2;
+    SystemImager::KeaConfUtils::list_clients($config, $csv, $quiet);
 }
 
-# Fonction pour afficher l'aide
-sub print_usage {
-    print <<'EOF';
-Usage: si_mkdhcpserver [options]
-Options:
-  --dns-domain <domain>           Domaine DNS (par défaut: /etc/resolv.conf)
-  --dns-servers <servers>         Liste de serveurs DNS (séparés par des espaces)
-  --add-network <ip/mask> [<ip_debut> <ip_fin>]  Ajoute ou met à jour un réseau
-  --del-network <ip/mask> [--force]  Supprime un réseau
-  --image-server <ip|fqdn>        Serveur d'image (par défaut: IP locale)
-  --boot-server <ip|fqdn>         Serveur de boot (par défaut: IP locale)
-  --log-server <ip|fqdn>          Adresse du serveur de logs
-  --log-server-port <port>        Port du serveur de logs (1-65535)
-  --ssh-download-url [<url>]      URL pour téléchargement SSH
-  --flamethrower-port-base [<port>] Port de base pour Flamethrower (par défaut: 8000)
-  --staging-dir <path>            Répertoire temporaire pour staging
-  --add-client <nom> <MAC> <IP> [--global]  Ajoute une réservation (globale si --global)
-  --del-client <nom|MAC|IP>       Supprime des réservations (support des wildcards *)
-  --list-clients [--csv]          Liste les réservations
-  --list-pools [--csv]            Liste les pools
-  --list-subnets [--csv]          Liste les sous-réseaux
-  --file <path>                   Fichier de configuration (par défaut: /etc/kea/kea-dhcp4.conf)
-  --debug                         Active les messages de débogage
-  --help                          Affiche cette aide
-EOF
-}
+exit 0;
 
 __END__
 
-=encoding utf8
+=pod
 
 =head1 NAME
 
-si_mkdhcpserver - Génère un fichier de configuration pour le serveur Kea DHCPv4
+si_mkdhcpserver - SystemImager DHCP server configuration tool for Kea DHCPv4
 
 =head1 SYNOPSIS
 
@@ -555,161 +780,175 @@ si_mkdhcpserver [options]
 
 =head1 DESCRIPTION
 
-Le script C<si_mkdhcpserver> génère un fichier de configuration JSON pour le serveur Kea DHCPv4, enregistré dans F</etc/kea/kea-dhcp4.conf>. Il permet de configurer des sous-réseaux, des pools, des réservations de clients, et des options DHCP spécifiques. Le script prend en charge l'ajout, la suppression et la mise à jour de sous-réseaux et de réservations, ainsi que l'affichage des informations de configuration existantes. La version 0.8.2 inclut des améliorations pour la modularité avec l'utilisation des modules C<SystemImager::IpUtils> et C<SystemImager::KeaConfUtils>. Les commentaires dans le fichier de configuration existant ne sont pas préservés, sauf pour un en-tête standard ajouté lors de la génération du fichier.
+si_mkdhcpserver is a command-line tool to manage Kea DHCPv4 server configuration.
+It creates and modifies the Kea configuration file, typically /etc/kea/kea-dhcp4.conf,
+with support for SystemImager-specific options and client classes.
 
 =head1 OPTIONS
 
-=over 4
+=head2 file
 
-=item B<--dns-domain> <domain>
+B<--file> <filename>
 
-Spécifie le domaine DNS à utiliser pour les clients DHCP. Par défaut, le domaine est extrait de F</etc/resolv.conf> (champ C<domain>).
+Specify the configuration file to use (default: /etc/kea/kea-dhcp4.conf).
 
-=item B<--dns-servers> <servers>
+=head2 debug
 
-Liste des serveurs DNS (IP ou FQDN) séparés par des espaces. Les adresses doivent être valides (IPv4 ou noms de domaine valides).
+B<--debug> [n]
 
-=item B<--add-network> <ip/mask> [<ip_debut> <ip_fin>]
+Enable debug output (n=1: operations, n=2: +function calls, n=3: +data structures).
+Incompatible with --quiet.
 
-Ajoute ou met à jour un sous-réseau avec l'adresse réseau et le masque spécifiés (format C<xxx.xxx.xxx.xxx/n>). Si C<ip_debut> et C<ip_fin> sont fournis, un pool DHCP est défini pour ce sous-réseau. La fonction C<SystemImager::KeaConfUtils::add_network> vérifie que :
-- L'adresse IP et le masque sont valides.
-- Les adresses de début et de fin du pool sont dans le sous-réseau et cohérentes.
-- Le pool ne chevauche pas partiellement un pool existant.
-- Le pool n'inclut pas d'adresses réservées globalement.
+=head2 quiet
 
-Un identifiant unique est assigné au sous-réseau.
+B<--quiet>
 
-=item B<--del-network> <ip/mask> [--force]
+Suppress all messages except list output. Implies --csv for list options.
+Incompatible with --debug, --help, and --man.
 
-Supprime un sous-réseau spécifié. Si le sous-réseau contient des réservations, l'opération échoue sauf si C<--force> est utilisé, auquel cas les réservations globales correspondantes sont supprimées.
+=head2 help
 
-=item B<--image-server> <ip|fqdn>
+B<--help>
 
-Adresse du serveur d'image (IP ou FQDN). Par défaut, utilise l'adresse IP locale détectée via C<SystemImager::IpUtils::get_local_ip>.
+Display this help message and exit.
 
-=item B<--boot-server> <ip|fqdn>
+=head2 man
 
-Adresse du serveur de démarrage (IP ou FQDN). Par défaut, utilise l'adresse IP locale.
+B<--man>
 
-=item B<--log-server> <ip|fqdn>
+Display the full manual and exit.
 
-Adresse du serveur de logs (IP ou FQDN). Ajoute une option DHCP personnalisée (code 201).
+=head2 add-subnet
 
-=item B<--log-server-port> <port>
+B<--add-subnet> <ip/mask>
 
-Port du serveur de logs (1-65535). Ajoute une option DHCP personnalisée (code 202).
+Add a new subnet (e.g., 192.168.1.0/24).
 
-=item B<--ssh-download-url> [<url>]
+=head2 del-subnet
 
-URL pour le téléchargement SSH des images. Par défaut, utilise C<ssh://<image-server>/var/lib/systemimager/images>. Ajoute une option DHCP personnalisée (code 203).
+B<--del-subnet> <ip/mask> [--force]
 
-=item B<--flamethrower-port-base> [<port>]
+Delete a subnet. Use --force to delete even if reservations exist.
 
-Port de base pour Flamethrower (par défaut: 8000). Ajoute une option DHCP personnalisée (code 204).
+=head2 add-pool
 
-=item B<--staging-dir> <path>
+B<--add-pool> <start-ip> <end-ip>
 
-Répertoire temporaire pour le staging. Ajoute une option DHCP personnalisée (code 205).
+Add a pool to correct subnet.
 
-=item B<--add-client> <nom> <MAC> <IP> [--global]
+=head2 del-pool
 
-Ajoute une réservation pour un client avec C<SystemImager::KeaConfUtils::add_client>. Vérifie l'unicité du nom, de la MAC, et de l'IP dans toute la configuration. Sans C<--global>, l'IP doit appartenir à un sous-réseau défini.
+B<--del-pool> <start-ip> <end-ip>
 
-=item B<--del-client> <nom|MAC|IP>
+Delete a pool from a subnet.
 
-Supprime les réservations correspondant au critère (support des wildcards *).
+=head2 add-client
 
-=item B<--list-clients> [--csv]
+B<--add-client> <name> <MAC> <IP> [--global]
 
-Liste les réservations avec C<SystemImager::KeaConfUtils::list_clients>. Colonnes : subnet, subnet-id, net-interface, fqdn, MAC, IP. Format CSV avec C<--csv>.
+Add a client reservation. Use --global to add globally.
 
-=item B<--list-pools> [--csv]
+=head2 del-client
 
-Liste les pools avec C<SystemImager::KeaConfUtils::list_pools>. Colonnes : subnet, subnet-id, net-interface, pool-start, pool-end. Format CSV avec C<--csv>.
+B<--del-client> <name|MAC|IP>
 
-=item B<--list-subnets> [--csv]
+Delete a client reservation (supports wildcards).
 
-Liste les sous-réseaux avec C<SystemImager::KeaConfUtils::list_networks>. Colonnes : subnet, subnet-id, ip-min, ip-max. Format CSV avec C<--csv>.
+=head2 dns-domain
 
-=item B<--file> <path>
+B<--dns-domain> <domain> [--subnet <ip/mask>]
 
-Spécifie le chemin du fichier de configuration Kea DHCPv4 (par défaut: F</etc/kea/kea-dhcp4.conf>).
+Set the DNS domain globally or for a subnet.
 
-=item B<--debug>
+=head2 dns-search
 
-Active les messages de débogage.
+B<--dns-search> <domain1 domain2 ...> [--subnet <ip/mask>]
 
-=item B<--help>
+Set DNS search domains globally or for a subnet.
 
-Affiche l'aide.
+=head2 dns-servers
 
-=back
+B<--dns-servers> <server1 server2 ...> [--subnet <ip/mask>]
 
-=head1 NOTES
+Set DNS servers globally or for a subnet.
 
-- Les interfaces réseau sont détectées via C<SystemImager::IpUtils::get_network_interfaces>. "N/A" est affiché si aucune interface ne correspond à un sous-réseau.
-- Les réservations ajoutées avec C<--add-client> sont placées dans le sous-réseau correspondant à l'IP (vérifié avec C<SystemImager::IpUtils::is_ip_in_network>) ou globalement avec C<--global>. L'unicité est vérifiée dans toute la configuration.
-- Les options de listage utilisent les fonctions de C<SystemImager::KeaConfUtils> et affichent "N/A" pour les champs manquants ou les interfaces non associées.
-- Les commentaires sont limités à l'en-tête standard généré par C<SystemImager::KeaConfUtils::write_kea_config>.
-- Les paramètres non définis pour C<--add-network> sont maintenant correctement gérés pour éviter les erreurs de type "Use of uninitialized value".
+=head2 image-server
+
+B<--image-server> <ip|fqdn> [--subnet <ip/mask>]
+
+Set the image server globally or for a subnet.
+
+=head2 boot-server
+
+B<--boot-server> <ip|fqdn> [--subnet <ip/mask>]
+
+Set the boot server (next-server) globally or for a subnet.
+
+=head2 log-servers
+
+B<--log-servers> <server1 server2 ...> [--subnet <ip/mask>]
+
+Set log servers globally or for a subnet.
+
+=head2 log-server-port
+
+B<--log-server-port> <port> [--subnet <ip/mask>]
+
+Set log server port (uint16) globally or for a subnet.
+
+=head2 ssh-download-url
+
+B<--ssh-download-url> <user@host/path> [--subnet <ip/mask>]
+
+Set SSH download URL globally or for a subnet.
+
+=head2 flamethrower-port-base
+
+B<--flamethrower-port-base> <port> [--subnet <ip/mask>]
+
+Set flamethrower port base (uint16) globally or for a subnet.
+
+=head2 staging-dir
+
+B<--staging-dir> [path] [--subnet <ip/mask> | --client <name|MAC|IP>]
+
+Set staging directory (default: /tmp) globally, for a subnet, or client.
+
+=head2 list-subnets
+
+B<--list-subnets> [--csv]
+
+List all subnets (CSV format if specified).
+
+=head2 list-pools
+
+B<--list-pools> [--csv]
+
+List all pools (CSV format if specified).
+
+=head2 list-clients
+
+B<--list-clients> [--csv]
+
+List all client reservations (CSV format if specified).
 
 =head1 EXIT STATUS
 
 =over 4
 
-=item B<0> Succès.
+=item B<0> Success
 
-=item B<1> Erreur (fichier non accessible, paramètres invalides, conflits, etc.).
-
-=back
-
-=head1 DEPENDENCIES
-
-Modules Perl :
-- C<Getopt::Long>
-- C<JSON::PP>
-- C<File::Spec>
-- C<Text::Table>
-- C<SystemImager::IpUtils>
-- C<SystemImager::KeaConfUtils>
-
-Commandes externes :
-- C<ip> (pour détecter les interfaces réseau)
-- C<kea-dhcp4> (avertissement si non installé)
-
-=head1 FILES
-
-=over 4
-
-=item F</etc/kea/kea-dhcp4.conf>
-
-Fichier de configuration généré.
-
-=item F</var/lib/kea/dhcp4.leases>
-
-Fichier de leases.
-
-=item F</etc/resolv.conf>
-
-Source du domaine DNS par défaut.
+=item B<1> Error (invalid options, file permissions, etc.)
 
 =back
-
-=head1 BUGS
-
-- Les commentaires existants ne sont pas préservés, sauf l'en-tête standard.
-- Les sous-réseaux mal formés dans la configuration existante sont ignorés.
-- Signalez les bugs à l'équipe SystemImager.
-
-B<Problèmes résolus dans la version 0.8.2> :
-- Correction des erreurs "Use of uninitialized value" dans C<SystemImager::KeaConfUtils::add_pool> et C<SystemImager::IpUtils::valid_ip> en ajoutant des vérifications explicites pour les paramètres indéfinis.
 
 =head1 AUTHOR
 
-Équipe SystemImager
+Olivier Lahaye <olivier.lahaye1@free.fr>
 
-=head1 SEE ALSO
+=head1 COPYRIGHT
 
-kea-dhcp4(8), kea-ctrl-agent(8), systemimager(1)
+Copyright (C) 2025 Olivier Lahaye
+Licensed under the GNU General Public License v2 or later.
 
 =cut
