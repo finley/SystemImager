@@ -205,7 +205,7 @@ Requires: rsync >= 2.4.6, systemimager-common = %{version}, dracut-systemimager 
 Requires: %pkg_dhcpd
 Requires(post): systemimager-common = %{version}
 Requires: %pkg_mkisofs
-BuildRequires: kea, 'perl(IO::Interface::Simple)', 'perl(Text::Table)'
+BuildRequires: kea, perl(IO::Interface::Simple), perl(Text::Table)
 # If systemd
 %if 0%{?_unitdir:1}
 %systemd_requires
