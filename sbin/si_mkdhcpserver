@@ -33,22 +33,22 @@ use Pod::Usage;
 use File::Spec;
 use File::Copy;
 use POSIX qw(strftime);
-use SystemImager::IpUtils qw(valid_ip);
+use SystemImager::IpUtils qw(valid_ip valid_hostname valid_fqdn);
 use SystemImager::KeaConfUtils;
 
 # Global variables
 my $config_file = "/etc/kea/kea-dhcp4.conf";
 my $debug = 0;
 my $quiet = 0;
+my $force = 0;
+my $help = 0;
+my $man = 0;
 my @add_subnets;
 my @del_subnets;
 my @add_pools;
 my @del_pools;
 my @add_clients;
 my @del_clients;
-my $force = 0;
-my $help = 0;
-my $man = 0;
 my $list_subnets = 0;
 my $list_pools = 0;
 my $list_clients = 0;
@@ -96,17 +96,62 @@ for (my $i = 0; $i < @ARGV; $i++) {
     }
 }
 
-#-------------------------------------------------------------------------------
-# Function:     get_modifier
-# Description:  Retrieves the modifier (--subnet or --client) and its value from @ARGV
-#               at the specified index, returning a hash with the modifier type and value.
-#               If no valid modifier is found, returns --global with an undefined value.
-# Parameters:   $index - Integer, the current index in @ARGV to check for a modifier
-# Returns:      Hash reference with keys:
-#                 - modifier: String ("--global", "--subnet", or "--client")
-#                 - modifier_value: String or undef, the value associated with the modifier
-# Throws:       None (relies on Getopt::Long for validation of modifier values)
-#-------------------------------------------------------------------------------
+# Function: check_arg
+# Description: Validates an option argument based on its type. Ensures the argument does not start with "--" and matches the specified type.
+# Parameters:
+#   $opt - String, the name of the option
+#   $value - String, the argument to validate
+#   $type - String, the expected type ('ip', 'path', 'file', 'subnet', 'client', 'fqdn', 'mac', 'port', 'ssh_url', 'host')
+# Returns: The validated argument
+# Dies: If the argument starts with "--" or fails type validation
+sub check_arg {
+    my ($opt, $value, $type) = @_;
+    die "--$opt: Insufficient arguments.\n" if $value =~ /^--/;
+    if ($type eq 'ip') {
+        die "--$opt: Invalid IPv4 address: $value\n" unless valid_ip($value);
+    } elsif ($type eq 'path') {
+        die "--$opt: Invalid path format: $value\n" unless $value =~ m|^/(?:[a-zA-Z0-9._-][a-zA-Z0-9._-]*(?:/[a-zA-Z0-9._-][a-zA-Z0-9._-]*)*)?$|;
+    } elsif ($type eq 'file') {
+        die "--$opt: Invalid file path: $value\n" unless $value =~ m|^[\w/.-]+$| && $value !~ m|^\s*$|;
+    } elsif ($type eq 'subnet') {
+        die "--$opt: Invalid subnet format: $value\n" unless $value =~ m|^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}$|;
+    } elsif ($type eq 'client') {
+        die "--$opt: Invalid client format: $value\n"
+            unless $value =~ m{^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2})$};
+    } elsif ($type eq 'hostname') {
+        die "--$opt: Invalid hostname format: $value\n"
+            unless valid_hostname($value);
+    } elsif ($type eq 'fqdn') {
+        die "--$opt: Invalid FQDN format: $value\n"
+            unless valid_fqdn($value);
+    } elsif ($type eq 'mac') {
+        die "--$opt: Invalid MAC address: $value\n"
+            unless $value =~ /^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/;
+    } elsif ($type eq 'port') {
+        die "--$opt: Invalid port format: $value\n" unless $value =~ m|^\d+$| && $value >= 0 && $value <= 65535;
+    } elsif ($type eq 'ssh_url') {
+        die "--$opt: Invalid SSH URL path format: $value\n"
+            unless $value =~ m|^/(?:[a-zA-Z0-9._-][a-zA-Z0-9._-]*(?:/[a-zA-Z0-9._-][a-zA-Z0-9._-]*)*)?$|;
+    } elsif ($type eq 'host') {
+		# A host can be either an IPv4 address or an FQDN (with or without trailing dot)
+        die "--$opt: Invalid host format (must be IPv4 or FQDN): $value\n"
+            unless valid_ip($value) || valid_fqdn($value);
+    } else {
+        die "--$opt: Unknown validation type: $type\n";
+    }
+    return $value;
+}
+
+#
+# Function: get_modifier
+# Description: Retrieves the modifier (--subnet or --client) and its value from @ARGV.
+#              Returns --global with undef value if no valid modifier is found.
+# Parameters:
+#   None (uses global @ARGV)
+# Returns: Hash reference with keys:
+#   - modifier: String ("--global", "--subnet", or "--client")
+#   - modifier_value: S
+#
 sub get_modifier {
     my $modifier = "--global";
     my $modifier_value = undef;
@@ -125,45 +170,152 @@ sub get_modifier {
     return { modifier => $modifier, modifier_value => $modifier_value };
 }
 
-# Function: check_arg
-# Description:  Validates an option argument based on its type. Checks if the
-#               argument does not start with -- (indicating a missing argument) and
-#               validates it against the specified type.
-# Parameters:   $opt - the name of the option
-#               $value - the argument to test
-#               $type - the expected type ('ip', 'file', 'subnet', 'client', 'fqdn', 'mac', 'ssh_url')
-# Returns:      The validated argument
-# Dies:         If the argument starts with -- or fails type validation
-sub check_arg {
-    my ($opt, $value, $type) = @_;
-    die "--$opt: Insufficient arguments.\n" if $value =~ /^--/;
-    if ($type eq 'ip') {
-        die "--$opt: Invalid IPv4 address: $value\n" unless valid_ip($value);
-    } elsif ($type eq 'path') {
-        die "--$opt: Invalid path format: $value\n" unless $value =~ m|^/(?:[a-zA-Z0-9._-][a-zA-Z0-9._-]*(?:/[a-zA-Z0-9._-][a-zA-Z0-9._-]*)*)?$|;
-    } elsif ($type eq 'file') {
-        die "--$opt: Invalid file path: $value\n" unless $value =~ m|^[\w/.-]+$| && $value !~ m|^\s*$|;
-    } elsif ($type eq 'subnet') {
-        die "--$opt: Invalid subnet format: $value\n" unless $value =~ m|^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}$|;
-    } elsif ($type eq 'client') {
-        die "--$opt: Invalid client format: $value\n"
-            unless $value =~ m{^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2})$};
-    } elsif ($type eq 'fqdn') {
-        die "--$opt: Invalid FQDN format: $value\n"
-            unless $value =~ m|^[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*$|;
-    } elsif ($type eq 'mac') {
-        die "--$opt: Invalid MAC address: $value\n"
-            unless $value =~ /^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/;
-    } elsif ($type eq 'port') {
-        die "--$opt: Invalid port format: $value\n" unless $value =~ m|^\d+$| && $value >= 0 && $value <= 65535;
-    } elsif ($type eq 'ssh_url') {
-        die "--$opt: Invalid SSH URL path format: $value\n"
-            unless $value =~ m|^/(?:[a-zA-Z0-9._-][a-zA-Z0-9._-]*(?:/[a-zA-Z0-9._-][a-zA-Z0-9._-]*)*)?$|;
-    } else {
-        die "--$opt: Unknown validation type: $type\n";
+#
+# Function: process_option_values
+# Description: Processes option values by validating and collecting them into a temporary array.
+#              When a modifier or new option is encountered, it creates a hash with the collected
+#              values and their associated modifier, then pushes it to the target array.
+# Parameters:
+#   $opt - String, the name of the option
+#   $value - String, the value to process
+#   $temp_array_ref - Array reference, temporary array to collect values
+#   $target_array_ref - Array reference, target array to store the final hash
+#   $arg_type - String, the type for validation ('ip', 'fqdn', etc.)
+# Returns: None
+# Dies: If validation via check_arg fails
+#
+sub process_option_values {
+    my ($opt, $value, $temp_array_ref, $target_array_ref, $arg_type) = @_;
+    # Validate the value
+    $value = check_arg($opt, $value, $arg_type);
+    # Add value to temporary array
+    push @$temp_array_ref, $value;
+    # Check for a following modifier or new option
+    if (!@ARGV || $ARGV[0] =~ /^--/) {
+        # Push collected values as a hash to target array if temp array is not empty
+        if (@$temp_array_ref) {
+            my $modifier_ref = get_modifier();
+            my $hash = {
+                params => [@$temp_array_ref],
+                modifier => substr($modifier_ref->{modifier}, 2),  # Remove "--" prefix
+                modifier_value => $modifier_ref->{modifier_value}
+            };
+            push @$target_array_ref, $hash;
+            # Reset temporary array
+            @$temp_array_ref = ();
+        }
     }
-    return $value;
 }
+
+# Function: push_remaining_params
+# Description: Pushes any remaining values in the temporary array to the target array
+#              as a hash with a "global" modifier and undef modifier_value.
+# Parameters:
+#   $temp_array_ref - Array reference, temporary array containing values
+#   $target_array_ref - Array reference, target array to store the hash
+# Returns: None
+# Dies: None
+sub push_remaining_params {
+    my ($temp_array_ref, $target_array_ref) = @_;
+    if (@$temp_array_ref) {
+        my $hash = {
+            params => [@$temp_array_ref],
+            modifier => "global",
+            modifier_value => undef
+        };
+        push @$target_array_ref, $hash;
+        @$temp_array_ref = ();  # Reset temporary array
+    }
+}
+
+# Function: set_option
+# Description: Applies a configuration option to the Kea configuration based on the modifier.
+#              Handles both single-value and multi-value options, joining multiple values into
+#              a CSV string if required. Calls SystemImager::KeaConfUtils::set_option or
+#              set_client_option depending on the modifier.
+# Parameters:
+#   $config - Hash reference, the Kea configuration
+#   $values - Array reference, the values for the option
+#   $modifier - String, the modifier ("subnet", "client", or "global")
+#   $modifier_value - String or undef, the value associated with the modifier
+#   $option_name - String, the name of the option (e.g., "domain-name", "next-server")
+#   $multiple_values - Boolean, true if values should be joined into a CSV string
+# Returns: Array of ($success, $msg) where $success is a boolean and $msg is the status message
+# Dies: None
+sub set_option {
+    my ($config, $values, $modifier, $modifier_value, $option_name, $multiple_values) = @_;
+    my $value = $multiple_values ? join(",", @$values) : $values->[0];  # Use CSV for multiple values, first value otherwise
+    if ($modifier eq 'subnet') {
+        print "Calling set_option($option_name, $value, $modifier_value)\n" if $debug >= 2;
+        return SystemImager::KeaConfUtils::set_option($config, $option_name, $value, $modifier_value);
+    } elsif ($modifier eq 'client') {
+        print "Calling set_client_option($modifier_value, $option_name, $value)\n" if $debug >= 2;
+        return SystemImager::KeaConfUtils::set_client_option($config, $modifier_value, $option_name, $value);
+    } else {
+        print "Calling set_option($option_name, $value, global)\n" if $debug >= 2;
+        return SystemImager::KeaConfUtils::set_option($config, $option_name, $value);
+    }
+}
+
+# Define option arrays for options that support modifiers
+my %option_arrays = (
+    'dns-domain'            => { temp => [], target => \@dns_domains, arg_type => 'fqdn' },
+    'dns-search'            => { temp => [], target => \@dns_searches, arg_type => 'fqdn' },
+    'dns-servers'           => { temp => [], target => \@dns_servers, arg_type => 'ip' },
+    'image-servers'         => { temp => [], target => \@image_servers, arg_type => 'host' },
+    'boot-server'           => { temp => [], target => \@boot_servers, arg_type => 'ip' },
+    'log-servers'           => { temp => [], target => \@log_servers, arg_type => 'ip' },
+    'log-server-port'       => { temp => [], target => \@log_server_ports, arg_type => 'port' },
+    'ssh-download-url'      => { temp => [], target => \@ssh_download_urls, arg_type => 'ssh_url' },
+    'flamethrower-port-base' => { temp => [], target => \@flamethrower_port_bases, arg_type => 'port' },
+    'staging-dir'           => { temp => [], target => \@staging_dir, arg_type => 'path' },
+);
+
+
+# Define option handlers for options that support modifiers
+# Each entry specifies the option name and whether it accepts multiple values (joined as CSV)
+my %option_handlers = (
+    'dns-domain' => {
+        option_name => 'domain-name',
+        multiple_values => 0,  # Single value
+    },
+    'dns-search' => {
+        option_name => 'domain-search',
+        multiple_values => 0,  # Single value
+    },
+    'dns-servers' => {
+        option_name => 'domain-name-servers',
+        multiple_values => 1,  # Multiple values, joined as CSV
+    },
+    'image-servers' => {
+        option_name => 'image-servers',
+        multiple_values => 1,  # Multiple values, joined as CSV
+    },
+    'boot-server' => {
+        option_name => 'next-server',
+        multiple_values => 0,  # Single value
+    },
+    'log-servers' => {
+        option_name => 'log-servers',
+        multiple_values => 1,  # Multiple values, joined as CSV
+    },
+    'log-server-port' => {
+        option_name => 'log-server-port',
+        multiple_values => 0,  # Single value
+    },
+    'ssh-download-url' => {
+        option_name => 'ssh-download-url',
+        multiple_values => 0,  # Single value
+    },
+    'flamethrower-port-base' => {
+        option_name => 'flamethrower-port-base',
+        multiple_values => 0,  # Single value
+    },
+    'staging-dir' => {
+        option_name => 'tmpfs-staging',
+        multiple_values => 0,  # Single value
+    },
+);
 
 # Parse command line options
 
@@ -173,99 +325,91 @@ Getopt::Long::Configure("pass_through");
 
 GetOptions(
     "file=s"              => sub {
-		$config_file = check_arg(@_, 'file');
-	},
+        $config_file = check_arg(@_, 'file');
+    },
     "debug:i"             => \$debug,
     "quiet"               => \$quiet,
     "help"                => \$help,
     "man"                 => \$man,
+    "force"               => \$force,
     "add-subnet=s{1}"     => sub {
         push @add_subnets, check_arg(@_, 'subnet');
     },
     "del-subnet=s{1}"     => sub {
         push @del_subnets, check_arg(@_, 'subnet');
     },
-    "force"               => \$force,
-    "add-pool=s{2}" => sub {
-		push @add_pools, check_arg(@_, 'ip'); # called for each parameter. (resulting in a flat list)
+    "add-pool=s{2}"       => sub {
+        push @add_pools, check_arg(@_, 'ip'); # called for each parameter. (resulting in a flat list)
     },
-    "del-pool=s{2}" => sub {
+    "del-pool=s{2}"       => sub {
         push @del_pools, check_arg(@_, 'ip'); # called for each parameter. (resulting in a flat list)
     },
-	"add-client=s{3,4}" => sub {
+    "add-client=s{3,4}"   => sub {
         my ($opt, @args) = @_;
-		#check_arg($opt, $args[0], 'client'); # Validate client (fqdn or mac or ip)
         push @add_clients, @args;
-		push @add_clients, shift @ARGV if defined $ARGV[0] && $ARGV[0] =~ /^--global/; # --xxx seen as option, thus sub not triggered 
+        push @add_clients, shift @ARGV if defined $ARGV[0] && $ARGV[0] =~ /^--global/; # --xxx seen as option, thus sub not triggered 
     },
-	"del-client=s{1}" => sub {
+    "del-client=s{1}"     => sub {
         push @del_clients, [check_arg(@_, 'client')];
     },
     "dns-domain=s"        => sub {
-        push @dns_domains, { value => check_arg(@_, 'fqdn'), %{get_modifier()} };
+        my ($opt, $value) = @_;
+        process_option_values($opt, $value, $option_arrays{'dns-domain'}{temp}, $option_arrays{'dns-domain'}{target}, $option_arrays{'dns-domain'}{arg_type});
     },
     "dns-search=s"        => sub {
-        push @dns_searches, { value => check_arg(@_, 'fqdn'), %{get_modifier()} };
+        my ($opt, $value) = @_;
+        process_option_values($opt, $value, $option_arrays{'dns-search'}{temp}, $option_arrays{'dns-search'}{target}, $option_arrays{'dns-search'}{arg_type});
     },
     "dns-servers=s{1,}"   => sub {
-        my ($opt, @values) = @_;
-        push @dns_servers, { value => [@values], %{get_modifier()} };
+        my ($opt, $value) = @_;
+        process_option_values($opt, $value, $option_arrays{'dns-servers'}{temp}, $option_arrays{'dns-servers'}{target}, $option_arrays{'dns-servers'}{arg_type});
     },
     "image-servers=s{1,}" => sub {
-        my ($opt, @values) = @_;
-        push @image_servers, { value => [@values], %{get_modifier()} };
+        my ($opt, $value) = @_;
+        process_option_values($opt, $value, $option_arrays{'image-servers'}{temp}, $option_arrays{'image-servers'}{target}, $option_arrays{'image-servers'}{arg_type});
     },
-    "boot-servers=s{1,}"  => sub {
-        my ($opt, @values) = @_;
-        push @boot_servers, { value => [@values], %{get_modifier()} };
+    "boot-server=s"       => sub {
+        my ($opt, $value) = @_;
+        process_option_values($opt, $value, $option_arrays{'boot-server'}{temp}, $option_arrays{'boot-server'}{target}, $option_arrays{'boot-server'}{arg_type});
     },
     "log-servers=s{1,}"   => sub {
-        my ($opt, @values) = @_;
-        push @log_servers, { value => [@values], %{get_modifier()} };
+        my ($opt, $value) = @_;
+        process_option_values($opt, $value, $option_arrays{'log-servers'}{temp}, $option_arrays{'log-servers'}{target}, $option_arrays{'log-servers'}{arg_type});
     },
     "log-server-port=i"   => sub {
         my ($opt, $value) = @_;
-        push @log_server_ports, { value => $value, %{get_modifier()} };
+        process_option_values($opt, $value, $option_arrays{'log-server-port'}{temp}, $option_arrays{'log-server-port'}{target}, $option_arrays{'log-server-port'}{arg_type});
     },
     "ssh-download-url=s"  => sub {
         my ($opt, $value) = @_;
-        push @ssh_download_urls, { value => $value, %{get_modifier()} };
+        process_option_values($opt, $value, $option_arrays{'ssh-download-url'}{temp}, $option_arrays{'ssh-download-url'}{target}, $option_arrays{'ssh-download-url'}{arg_type});
     },
     "flamethrower-port-base=i" => sub {
         my ($opt, $value) = @_;
-        push @flamethrower_port_bases, { value => $value, %{get_modifier()} };
+        process_option_values($opt, $value, $option_arrays{'flamethrower-port-base'}{temp}, $option_arrays{'flamethrower-port-base'}{target}, $option_arrays{'flamethrower-port-base'}{arg_type});
     },
     "staging-dir=s"       => sub {
         my ($opt, $value) = @_;
-        my $entry = { value => $value, %{get_modifier()} };
-        push @staging_dir, $entry;
+        process_option_values($opt, $value, $option_arrays{'staging-dir'}{temp}, $option_arrays{'staging-dir'}{target}, $option_arrays{'staging-dir'}{arg_type});
     },
     "subnet=s"            => sub {
         my ($opt, $value) = @_;
-        unless ($value =~ m|^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}$|) {
-            die "--$opt: Invalid subnet format: $value\n";
-        }
+        check_arg($opt, $value, 'subnet');
     },
     "client=s"            => sub {
         my ($opt, $value) = @_;
-        unless ($value =~ m{^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2})$}) {
-            die "--$opt: Invalid client format (must be FQDN, IPv4, or MAC): $value\n";
-        }
+        check_arg($opt, $value, 'client');
     },
     "list-subnets"        => \$list_subnets,
     "list-pools"          => \$list_pools,
     "list-clients"        => \$list_clients,
     "csv"                 => \$csv,
-) or pod2usage(1);
+) or die "Command failed. See documentation: ./si_mkdhcpserver --man";
 
-# Manual parsing of remaining command line options
-#my $option = "";
-#while (@ARGV) {
-#    $option = shift @ARGV if $ARGV[0] =~ /^--/;
-#    print "got option: $option\n" if $debug >= 1
-#
-#}
-
+# Push any remaining values in temporary arrays to their target arrays
+foreach my $option (keys %option_arrays) {
+    push_remaining_params($option_arrays{$option}{temp}, $option_arrays{$option}{target});
+}
 
 # Validate options
 if ($quiet && ($help || $man || $debug)) {
@@ -305,11 +449,11 @@ if ($needs_write) {
     } else {
         my $dir = File::Spec->catdir((File::Spec->splitpath($config_file))[0,1]);
         unless (-e $dir) {
-            die "--file : directory '$dir' does not exists\n" unless $quiet;
+            die "--file: directory '$dir' does not exists\n" unless $quiet;
             exit 1;
         }
         unless (-w $dir) {
-            die "--file : Cannot create configuration file '$config_file' in directory '$dir'. Needs write permission\n" unless $quiet;
+            die "--file: Cannot create configuration file '$config_file' in directory '$dir'. Needs write permission\n" unless $quiet;
             exit 1;
         }
     }
@@ -406,9 +550,9 @@ while (@add_clients >= 3) {
     my $mac = shift @add_clients;
     my $ip = shift @add_clients;
     my $global = (@add_clients && $add_clients[0] eq "--global") ? shift @add_clients : undef;
-	check_arg("add-client",$name, 'fqdn');
-	check_arg("add-client",$mac, 'mac');
-	check_arg("add-client",$ip, 'ip');
+    check_arg("add-client", $name, 'hostname');
+    check_arg("add-client", $mac, 'mac');
+    check_arg("add-client", $ip, 'ip');
     print "Calling add_client($name, $mac, $ip, ", ($global ? "global" : "subnet"), ")\n" if $debug >= 2;
     my ($success, $msg) = SystemImager::KeaConfUtils::add_client($config, $name, $mac, $ip, $global);
     die "Error: $msg" unless ($success);
@@ -430,306 +574,34 @@ foreach my $client (@del_clients) {
     $modified = 1;
 }
 
-# Process --dns-domain options
-foreach my $entry (@dns_domains) {
-    my $domain = $entry->{value};
-    my $modifier = $entry->{modifier};
-    my $modifier_value = $entry->{modifier_value};
-    unless ($domain =~ m|^[a-zA-Z0-9.-]+$|) {
-        print STDERR "Error: Invalid domain format: $domain\n" unless $quiet;
-        exit 1;
-    }
-    my ($success, $msg);
-    if ($modifier eq "--subnet") {
-        print "Calling set_option(domain-name, $domain, $modifier_value)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "domain-name", $domain, $modifier_value);
-    } elsif ($modifier eq "--client") {
-        print "Calling set_client_option($modifier_value, domain-name, $domain)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_client_option($config, $modifier_value, "domain-name", $domain);
-    } else {
-        print "Calling set_option(domain-name, $domain, global)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "domain-name", $domain);
-    }
-    unless ($success) {
-        print STDERR "Error: $msg\n" unless $quiet;
-        exit 1;
-    }
-    print "$msg\n" unless $quiet;
-    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
-    $modified = 1;
-}
-
-# Process --dns-search options
-foreach my $entry (@dns_searches) {
-    my $search = $entry->{value};
-    my $modifier = $entry->{modifier};
-    my $modifier_value = $entry->{modifier_value};
-    unless ($search =~ m|^[a-zA-Z0-9.-]+$|) {
-        print STDERR "Error: Invalid search domain format: $search\n" unless $quiet;
-        exit 1;
-    }
-    my ($success, $msg);
-    if ($modifier eq "--subnet") {
-        print "Calling set_option(domain-search, $search, $modifier_value)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "domain-search", $search, $modifier_value);
-    } elsif ($modifier eq "--client") {
-        print "Calling set_client_option($modifier_value, domain-search, $search)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_client_option($config, $modifier_value, "domain-search", $search);
-    } else {
-        print "Calling set_option(domain-search, $search, global)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "domain-search", $search);
-    }
-    unless ($success) {
-        print STDERR "Error: $msg\n" unless $quiet;
-        exit 1;
-    }
-    print "$msg\n" unless $quiet;
-    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
-    $modified = 1;
-}
-
-# Process --dns-servers options
-foreach my $entry (@dns_servers) {
-    my $ips = $entry->{value}; # Array reference
-    my $modifier = $entry->{modifier};
-    my $modifier_value = $entry->{modifier_value};
-    foreach my $ip (@$ips) {
-        unless (valid_ip($ip)) {
-            print STDERR "Error: Invalid IP format: $ip\n" unless $quiet;
+# Process options with modifiers
+# Iterate over each option that supports modifiers and apply the corresponding
+# configuration changes using the generic set_option function. Values are already
+# validated by check_arg during GetOptions, so we directly call set_option with
+# the option name and multiple_values flag from %option_handlers.
+foreach my $option (keys %option_handlers) {
+    my $handler = $option_handlers{$option};
+    my $target_array = $option_arrays{$option}{target};
+    foreach my $entry (@$target_array) {
+        my $values = $entry->{params};  # Array of values for this option
+        my $modifier = $entry->{modifier};
+        my $modifier_value = $entry->{modifier_value};
+        my ($success, $msg) = set_option(
+            $config,
+            $values,
+            $modifier,
+            $modifier_value,
+            $handler->{option_name},
+            $handler->{multiple_values}
+        );
+        unless ($success) {
+            print STDERR "Error: $msg\n" unless $quiet;
             exit 1;
         }
+        print "$msg\n" unless $quiet;
+        push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
+        $modified = 1;
     }
-    my $csv_value = join(",", @$ips); # Create CSV string
-    my ($success, $msg);
-    if ($modifier eq "--subnet") {
-        print "Calling set_option(domain-name-servers, $csv_value, $modifier_value)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "domain-name-servers", $csv_value, $modifier_value);
-    } elsif ($modifier eq "--client") {
-        print "Calling set_client_option($modifier_value, domain-name-servers, $csv_value)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_client_option($config, $modifier_value, "domain-name-servers", $csv_value);
-    } else {
-        print "Calling set_option(domain-name-servers, $csv_value, global)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "domain-name-servers", $csv_value);
-    }
-    unless ($success) {
-        print STDERR "Error: $msg\n" unless $quiet;
-        exit 1;
-    }
-    print "$msg\n" unless $quiet;
-    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
-    $modified = 1;
-}
-
-# Process --image-servers options
-foreach my $entry (@image_servers) {
-    my $ips = $entry->{value}; # Array reference
-    my $modifier = $entry->{modifier};
-    my $modifier_value = $entry->{modifier_value};
-    foreach my $ip (@$ips) {
-        unless (valid_ip($ip)) {
-            print STDERR "Error: Invalid IP format: $ip\n" unless $quiet;
-            exit 1;
-        }
-    }
-    my $csv_value = join(",", @$ips); # Create CSV string
-    my ($success, $msg);
-    if ($modifier eq "--subnet") {
-        print "Calling set_option(image-servers, $csv_value, $modifier_value)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "image-servers", $csv_value, $modifier_value);
-    } elsif ($modifier eq "--client") {
-        print "Calling set_client_option($modifier_value, image-servers, $csv_value)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_client_option($config, $modifier_value, "image-servers", $csv_value);
-    } else {
-        print "Calling set_option(image-servers, $csv_value, global)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "image-servers", $csv_value);
-    }
-    unless ($success) {
-        print STDERR "Error: $msg\n" unless $quiet;
-        exit 1;
-    }
-    print "$msg\n" unless $quiet;
-    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
-    $modified = 1;
-}
-
-# Process --boot-servers options
-foreach my $entry (@boot_servers) {
-    my $ips = $entry->{value}; # Array reference
-    my $modifier = $entry->{modifier};
-    my $modifier_value = $entry->{modifier_value};
-    foreach my $ip (@$ips) {
-        unless (valid_ip($ip)) {
-            print STDERR "Error: Invalid IP format: $ip\n" unless $quiet;
-            exit 1;
-        }
-    }
-    my $csv_value = join(",", @$ips); # Create CSV string
-    my ($success, $msg);
-    if ($modifier eq "--subnet") {
-        print "Calling set_option(boot-servers, $csv_value, $modifier_value)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "boot-servers", $csv_value, $modifier_value);
-    } elsif ($modifier eq "--client") {
-        print "Calling set_client_option($modifier_value, boot-servers, $csv_value)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_client_option($config, $modifier_value, "boot-servers", $csv_value);
-    } else {
-        print "Calling set_option(boot-servers, $csv_value, global)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "boot-servers", $csv_value);
-    }
-    unless ($success) {
-        print STDERR "Error: $msg\n" unless $quiet;
-        exit 1;
-    }
-    print "$msg\n" unless $quiet;
-    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
-    $modified = 1;
-}
-
-# Process --log-servers options
-foreach my $entry (@log_servers) {
-    my $ips = $entry->{value}; # Array reference
-    my $modifier = $entry->{modifier};
-    my $modifier_value = $entry->{modifier_value};
-    foreach my $ip (@$ips) {
-        unless (valid_ip($ip)) {
-            print STDERR "Error: Invalid IP format: $ip\n" unless $quiet;
-            exit 1;
-        }
-    }
-    my $csv_value = join(",", @$ips); # Create CSV string
-    my ($success, $msg);
-    if ($modifier eq "--subnet") {
-        print "Calling set_option(log-servers, $csv_value, $modifier_value)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "log-servers", $csv_value, $modifier_value);
-    } elsif ($modifier eq "--client") {
-        print "Calling set_client_option($modifier_value, log-servers, $csv_value)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_client_option($config, $modifier_value, "log-servers", $csv_value);
-    } else {
-        print "Calling set_option(log-servers, $csv_value, global)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "log-servers", $csv_value);
-    }
-    unless ($success) {
-        print STDERR "Error: $msg\n" unless $quiet;
-        exit 1;
-    }
-    print "$msg\n" unless $quiet;
-    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
-    $modified = 1;
-}
-
-# Process --log-server-port options
-foreach my $entry (@log_server_ports) {
-    my $port = $entry->{value};
-    my $modifier = $entry->{modifier};
-    my $modifier_value = $entry->{modifier_value};
-    unless ($port =~ m|^\d+$| && $port >= 0 && $port <= 65535) {
-        print STDERR "Error: Invalid port format: $port (must be 0-65535)\n" unless $quiet;
-        exit 1;
-    }
-    my ($success, $msg);
-    if ($modifier eq "--subnet") {
-        print "Calling set_option(log-server-port, $port, $modifier_value)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "log-server-port", $port, $modifier_value);
-    } elsif ($modifier eq "--client") {
-        print "Calling set_client_option($modifier_value, log-server-port, $port)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_client_option($config, $modifier_value, "log-server-port", $port);
-    } else {
-        print "Calling set_option(log-server-port, $port, global)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "log-server-port", $port);
-    }
-    unless ($success) {
-        print STDERR "Error: $msg\n" unless $quiet;
-        exit 1;
-    }
-    print "$msg\n" unless $quiet;
-    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
-    $modified = 1;
-}
-
-# Process --ssh-download-url options
-foreach my $entry (@ssh_download_urls) {
-    my $url = $entry->{value};
-    my $modifier = $entry->{modifier};
-    my $modifier_value = $entry->{modifier_value};
-    unless ($url =~ m|^/(?:[a-zA-Z0-9._-][a-zA-Z0-9._-]*(?:/[a-zA-Z0-9._-][a-zA-Z0-9._-]*)*)?$|) {
-        print STDERR "Error: Invalid URL path format: $url\n" unless $quiet;
-        exit 1;
-    }
-    my ($success, $msg);
-    if ($modifier eq "--subnet") {
-        print "Calling set_option(ssh-download-url, $url, $modifier_value)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "ssh-download-url", $url, $modifier_value);
-    } elsif ($modifier eq "--client") {
-        print "Calling set_client_option($modifier_value, ssh-download-url, $url)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_client_option($config, $modifier_value, "ssh-download-url", $url);
-    } else {
-        print "Calling set_option(ssh-download-url, $url, global)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "ssh-download-url", $url);
-    }
-    unless ($success) {
-        print STDERR "Error: $msg\n" unless $quiet;
-        exit 1;
-    }
-    print "$msg\n" unless $quiet;
-    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
-    $modified = 1;
-}
-
-# Process --flamethrower-port-base options
-foreach my $entry (@flamethrower_port_bases) {
-    my $port = $entry->{value};
-    my $modifier = $entry->{modifier};
-    my $modifier_value = $entry->{modifier_value};
-    unless ($port =~ m|^\d+$| && $port >= 0 && $port <= 65535) {
-        print STDERR "Error: Invalid port format: $port (must be 0-65535)\n" unless $quiet;
-        exit 1;
-    }
-    my ($success, $msg);
-    if ($modifier eq "--subnet") {
-        print "Calling set_option(flamethrower-port-base, $port, $modifier_value)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "flamethrower-port-base", $port, $modifier_value);
-    } elsif ($modifier eq "--client") {
-        print "Calling set_client_option($modifier_value, flamethrower-port-base, $port)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_client_option($config, $modifier_value, "flamethrower-port-base", $port);
-    } else {
-        print "Calling set_option(flamethrower-port-base, $port, global)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "flamethrower-port-base", $port);
-    }
-    unless ($success) {
-        print STDERR "Error: $msg\n" unless $quiet;
-        exit 1;
-    }
-    print "$msg\n" unless $quiet;
-    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
-    $modified = 1;
-}
-
-# Process --staging-dir options
-foreach my $entry (@staging_dir) {
-    my $path = $entry->{value};
-    my $modifier = $entry->{modifier};
-    my $modifier_value = $entry->{modifier_value};
-    unless ($path =~ m|^/(?:[a-zA-Z0-9._-][a-zA-Z0-9._-]*(?:/[a-zA-Z0-9._-][a-zA-Z0-9._-]*)*)?$|) {
-        print STDERR "Error: Invalid path format: $path\n" unless $quiet;
-        exit 1;
-    }
-    my ($success, $msg);
-    if ($modifier eq "--subnet") {
-        print "Calling set_option(tmpfs-staging, $path, $modifier_value)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "tmpfs-staging", $path, $modifier_value);
-    } elsif ($modifier eq "--client") {
-        print "Calling set_client_option($modifier_value, tmpfs-staging, $path)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_client_option($config, $modifier_value, "tmpfs-staging", $path);
-    } else {
-        print "Calling set_option(tmpfs-staging, $path, global)\n" if $debug >= 2;
-        ($success, $msg) = SystemImager::KeaConfUtils::set_option($config, "tmpfs-staging", $path);
-    }
-    unless ($success) {
-        print STDERR "Error: $msg\n" unless $quiet;
-        exit 1;
-    }
-    print "$msg\n" unless $quiet;
-    push @$changelog, strftime("// %Y-%m-%d %H:%M:%S $msg", localtime);
-    $modified = 1;
 }
 
 # Write configuration if modified
@@ -780,165 +652,276 @@ si_mkdhcpserver [options]
 
 =head1 DESCRIPTION
 
-si_mkdhcpserver is a command-line tool to manage Kea DHCPv4 server configuration.
-It creates and modifies the Kea configuration file, typically /etc/kea/kea-dhcp4.conf,
-with support for SystemImager-specific options and client classes.
+B<si_mkdhcpserver> is a command-line tool designed to manage and configure Kea DHCPv4 server configurations. It creates and modifies Kea configuration files, typically F</etc/kea/kea-dhcp4.conf>, with support for SystemImager-specific options and client classes. The tool allows for adding subnets, pools, client reservations, and setting various DHCP options, either globally or scoped to specific subnets or clients. It also supports listing configuration elements in human-readable or CSV format.
 
 =head1 OPTIONS
 
-=head2 file
+The options are processed in the order they appear on the command line. Modifiers (e.g., C<--subnet>, C<--client>, C<--global>, C<--force>, C<--csv>) apply to the option immediately preceding them. If an option is specified multiple times, each instance can have its own modifier, which applies only to that instance.
 
-B<--file> <filename>
+=head2 General Options
 
-Specify the configuration file to use (default: /etc/kea/kea-dhcp4.conf).
+=over 4
 
-=head2 debug
+=item B<--file> <filename>
 
-B<--debug> [n]
+Specifies the Kea configuration file to read and write. The default is F</etc/kea/kea-dhcp4.conf>. The file path must be valid, and the directory must exist and be writable. Invalid paths (e.g., containing special characters like C<|>) or non-existent directories will cause the command to fail.
 
-Enable debug output (n=1: operations, n=2: +function calls, n=3: +data structures).
-Incompatible with --quiet.
+Example: C<--file /tmp/kea-dhcp4.conf>
 
-=head2 quiet
+=item B<--debug> [n]
 
-B<--quiet>
+Enables debug output. The level C<n> controls verbosity:
+- C<n=1>: Displays operations performed.
+- C<n=2>: Includes function calls.
+- C<n=3>: Includes data structures.
 
-Suppress all messages except list output. Implies --csv for list options.
-Incompatible with --debug, --help, and --man.
+Incompatible with C<--quiet>.
 
-=head2 help
+Example: C<--debug 2>
 
-B<--help>
+=item B<--quiet>
 
-Display this help message and exit.
+Suppresses all output messages except for the results of list operations (C<--list-subnets>, C<--list-pools>, C<--list-clients>). Automatically enables CSV format for list options. Incompatible with C<--debug>, C<--help>, and C<--man>.
 
-=head2 man
+Example: C<--quiet --list-subnets>
 
-B<--man>
+=item B<--help>
 
-Display the full manual and exit.
+Displays a brief help message summarizing available options and exits with status 0.
 
-=head2 add-subnet
+Example: C<--help>
 
-B<--add-subnet> <ip/mask>
+=item B<--man>
 
-Add a new subnet (e.g., 192.168.1.0/24).
+Displays the full manual page (this documentation) and exits with status 0.
 
-=head2 del-subnet
+Example: C<--man>
 
-B<--del-subnet> <ip/mask> [--force]
+=back
 
-Delete a subnet. Use --force to delete even if reservations exist.
+=head2 Configuration Modification Options
 
-=head2 add-pool
+=over 4
 
-B<--add-pool> <start-ip> <end-ip>
+=item B<--add-subnet> <ip/mask>
 
-Add a pool to correct subnet.
+Adds a new subnet to the configuration, specified in CIDR notation (e.g., C<192.168.1.0/24>). Fails if the subnet already exists or if the IP/mask is invalid.
 
-=head2 del-pool
+Example: C<--add-subnet 192.168.1.0/24>
 
-B<--del-pool> <start-ip> <end-ip>
+=item B<--del-subnet> <ip/mask> [--force]
 
-Delete a pool from a subnet.
+Deletes a subnet from the configuration. Fails if the subnet contains reservations unless C<--force> is specified. The C<--force> modifier applies only to the immediately preceding C<--del-subnet>.
 
-=head2 add-client
+Example: C<--del-subnet 192.168.1.0/24 --force>
 
-B<--add-client> <name> <MAC> <IP> [--global]
+=item B<--add-pool> <start-ip> <end-ip>
 
-Add a client reservation. Use --global to add globally.
+Adds an IP address pool to the appropriate subnet. The pool must be within an existing subnet, and the start and end IPs must be valid and in the correct order.
 
-=head2 del-client
+Example: C<--add-pool 192.168.1.10 192.168.1.20>
 
-B<--del-client> <name|MAC|IP>
+=item B<--del-pool> <start-ip> <end-ip>
 
-Delete a client reservation (supports wildcards).
+Deletes an IP address pool from a subnet. The pool must exist in the configuration.
 
-=head2 dns-domain
+Example: C<--del-pool 192.168.1.10 192.168.1.20>
 
-B<--dns-domain> <domain> [--subnet <ip/mask>]
+=item B<--add-client> <name> <MAC> <IP> [--global]
 
-Set the DNS domain globally or for a subnet.
+Adds a client reservation with the specified hostname, MAC address, and IP address. The hostname must be a valid simple hostname (no dots, per RFC 1123), the MAC address must be in the format C<xx:xx:xx:xx:xx:xx>, and the IP must be valid and within an existing subnet unless C<--global> is specified. The C<--global> modifier makes the reservation global rather than subnet-specific and applies only to the immediately preceding C<--add-client>.
 
-=head2 dns-search
+Example: C<--add-client testclient 00:11:22:33:44:55 192.168.1.100 --global>
 
-B<--dns-search> <domain1 domain2 ...> [--subnet <ip/mask>]
+=item B<--del-client> <name|MAC|IP>
 
-Set DNS search domains globally or for a subnet.
+Deletes a client reservation identified by its hostname, MAC address, or IP address. Supports wildcards (e.g., C<test*> to delete all clients starting with "test").
 
-=head2 dns-servers
+Example: C<--del-client testclient>
 
-B<--dns-servers> <server1 server2 ...> [--subnet <ip/mask>]
+=back
 
-Set DNS servers globally or for a subnet.
+=head2 DHCP Option Configuration
 
-=head2 image-server
+These options configure DHCP options globally or for a specific subnet or client. The C<--subnet> or C<--client> modifier, when used, applies the option to the specified subnet or client and must immediately follow the option. Multiple instances of an option can be specified with different modifiers.
 
-B<--image-server> <ip|fqdn> [--subnet <ip/mask>]
+=over 4
 
-Set the image server globally or for a subnet.
+=item B<--dns-domain> <domain> [--subnet <ip/mask>]
 
-=head2 boot-server
+Sets the DHCP option C<domain-name> to the specified domain (a valid FQDN per RFC 1123, with or without a trailing dot). Applies globally unless C<--subnet> specifies a subnet.
 
-B<--boot-server> <ip|fqdn> [--subnet <ip/mask>]
+Example: C<--dns-domain example.com --subnet 192.168.1.0/24>
 
-Set the boot server (next-server) globally or for a subnet.
+=item B<--dns-search> <domain1 domain2 ...> [--subnet <ip/mask>]
 
-=head2 log-servers
+Sets the DHCP option C<domain-search> with one or more valid FQDNs (per RFC 1123, with or without trailing dots). Multiple domains are combined into a comma-separated value in the configuration and displayed in a single message (e.g., "Updated domain-search to example.com,example.org"). Applies globally unless C<--subnet> specifies a subnet.
 
-B<--log-servers> <server1 server2 ...> [--subnet <ip/mask>]
+Example: C<--dns-search example.com example.org --subnet 192.168.1.0/24>
 
-Set log servers globally or for a subnet.
+=item B<--dns-servers> <ip> [<ip> ...] [--subnet <ip/mask>]
 
-=head2 log-server-port
+Sets the DHCP option C<domain-name-servers> with one or more valid IP addresses. Multiple IPs are combined into a comma-separated value in the configuration and displayed in a single message (e.g., "Updated domain-name-servers to 8.8.8.8,8.8.4.4"). Applies globally unless C<--subnet> specifies a subnet.
 
-B<--log-server-port> <port> [--subnet <ip/mask>]
+Example: C<--dns-servers 8.8.8.8 8.8.4.4 --subnet 192.168.1.0/24>
 
-Set log server port (uint16) globally or for a subnet.
+=item B<--image-servers> <ip|fqdn> [<ip|fqdn> ...] [--subnet <ip/mask>]
 
-=head2 ssh-download-url
+Sets the SystemImager-specific DHCP option C<image-servers> (code 200) with one or more IP addresses or valid FQDNs (per RFC 1123, with or without trailing dots). Multiple values are combined into a comma-separated value in the configuration and displayed in a single message (e.g., "Updated image-servers to server1.example.com,server2.example.com"). Applies globally unless C<--subnet> specifies a subnet.
 
-B<--ssh-download-url> <user@host/path> [--subnet <ip/mask>]
+Example: C<--image-servers server1.example.com server2.example.com>
 
-Set SSH download URL globally or for a subnet.
+=item B<--boot-server> <ip> [--subnet <ip/mask>]
 
-=head2 flamethrower-port-base
+Sets the DHCP option C<next-server> (boot server) to a single valid IP address. Applies globally unless C<--subnet> specifies a subnet.
 
-B<--flamethrower-port-base> <port> [--subnet <ip/mask>]
+Example: C<--boot-server 192.168.1.1 --subnet 192.168.1.0/24>
 
-Set flamethrower port base (uint16) globally or for a subnet.
+=item B<--log-servers> <ip> [<ip> ...] [--subnet <ip/mask>]
 
-=head2 staging-dir
+Sets the SystemImager-specific DHCP option C<log-servers> (code 7) with one or more valid IP addresses. Multiple IPs are combined into a comma-separated value in the configuration and displayed in a single message (e.g., "Updated log-servers to 10.0.0.1,10.0.0.2"). Applies globally unless C<--subnet> specifies a subnet.
 
-B<--staging-dir> [path] [--subnet <ip/mask> | --client <name|MAC|IP>]
+Example: C<--log-servers 10.0.0.1 10.0.0.2>
 
-Set staging directory (default: /tmp) globally, for a subnet, or client.
+=item B<--log-server-port> <port> [--subnet <ip/mask>]
 
-=head2 list-subnets
+Sets the SystemImager-specific DHCP option C<log-server-port> (code 8) to a single port number (uint16, 1-65535). Applies globally unless C<--subnet> specifies a subnet.
 
-B<--list-subnets> [--csv]
+Example: C<--log-server-port 514 --subnet 192.168.1.0/24>
 
-List all subnets (CSV format if specified).
+=item B<--ssh-download-url> <user@host/path> [--subnet <ip/mask>]
 
-=head2 list-pools
+Sets the SystemImager-specific DHCP option C<ssh-download-url> (code 201) to a URL in the format C<user@host/path>. Applies globally unless C<--subnet> specifies a subnet.
 
-B<--list-pools> [--csv]
+Example: C<--ssh-download-url user@server.example.com/image --subnet 192.168.1.0/24>
 
-List all pools (CSV format if specified).
+=item B<--flamethrower-port-base> <port> [--subnet <ip/mask>]
 
-=head2 list-clients
+Sets the SystemImager-specific DHCP option C<flamethrower-port-base> (code 203) to a port number (uint16, 1-65535). Applies globally unless C<--subnet> specifies a subnet.
 
-B<--list-clients> [--csv]
+Example: C<--flamethrower-port-base 9000 --subnet 192.168.1.0/24>
 
-List all client reservations (CSV format if specified).
+=item B<--staging-dir> <path> [--subnet <ip/mask> | --client <name|MAC|IP>]
+
+Sets the SystemImager-specific DHCP option C<staging-dir> (code 202) to a directory path (default: F</tmp>). Can be applied globally, to a subnet with C<--subnet>, or to a specific client with C<--client>. The C<--client> modifier supports wildcards.
+
+Example: C<--staging-dir /mnt/staging --client testclient>
+
+=back
+
+=head2 List Options
+
+=over 4
+
+=item B<--list-subnets> [--csv]
+
+Lists all subnets in the configuration. With C<--csv>, outputs in CSV format with columns: C<subnet,subnet-id,net-interface-name,ip-min,ip-max>. The C<--csv> modifier applies only to the immediately preceding C<--list-subnets>.
+
+Example: C<--list-subnets --csv>
+
+=item B<--list-pools> [--csv]
+
+Lists all IP pools in the configuration. With C<--csv>, outputs in CSV format. The C<--csv> modifier applies only to the immediately preceding C<--list-pools>.
+
+Example: C<--list-pools --csv>
+
+=item B<--list-clients> [--csv]
+
+Lists all client reservations in the configuration. With C<--csv>, outputs in CSV format. The C<--csv> modifier applies only to the immediately preceding C<--list-clients>.
+
+Example: C<--list-clients --csv>
+
+=back
+
+=head2 Modifiers
+
+Modifiers adjust the scope or behavior of the option they follow. Each modifier applies only to the option immediately preceding it in the command line. If an option is specified multiple times, each instance can have its own modifier, allowing fine-grained control over the configuration.
+
+=over 4
+
+=item B<--subnet> <ip/mask>
+
+Specifies that the preceding option (e.g., C<--dns-domain>, C<--dns-servers>, etc.) applies to the given subnet (in CIDR notation, e.g., C<192.168.1.0/24>) rather than globally. The subnet must exist in the configuration.
+
+Example:
+  C<--dns-servers 8.8.8.8 --subnet 192.168.1.0/24 --dns-servers 1.1.1.1 --subnet 192.168.2.0/24>
+  Applies C<8.8.8.8> to subnet C<192.168.1.0/24> and C<1.1.1.1> to subnet C<192.168.2.0/24>.
+
+=item B<--client> <name|MAC|IP>
+
+Specifies that the preceding option (e.g., C<--staging-dir>) applies to the client reservation identified by its hostname, MAC address, or IP address. Supports wildcards. The client must exist in the configuration.
+
+Example:
+  C<--staging-dir /mnt/client1 --client client1 --staging-dir /mnt/client2 --client client2>
+  Sets different staging directories for clients C<client1> and C<client2>.
+
+=item B<--global>
+
+Specifies that the preceding C<--add-client> option creates a global reservation rather than a subnet-specific one. Only applies to C<--add-client>.
+
+Example:
+  C<--add-client client1 00:11:22:33:44:55 192.168.1.100 --global>
+  Adds a global reservation for C<client1>.
+
+=item B<--force>
+
+Allows the preceding C<--del-subnet> option to delete a subnet even if it contains reservations. Only applies to C<--del-subnet>.
+
+Example:
+  C<--del-subnet 192.168.1.0/24 --force>
+  Deletes the subnet and its reservations.
+
+=item B<--csv>
+
+Enables CSV output for the preceding list option (C<--list-subnets>, C<--list-pools>, C<--list-clients>). Also implied by C<--quiet> for list operations.
+
+Example:
+  C<--list-subnets --csv --list-pools>
+  Outputs subnets in CSV format but pools in human-readable format.
+
+=back
 
 =head1 EXIT STATUS
 
 =over 4
 
-=item B<0> Success
+=item B<0>
 
-=item B<1> Error (invalid options, file permissions, etc.)
+Success: The configuration was modified or listed successfully, and the output file (if modified) is valid according to C<kea-dhcp4 -t>.
+
+=item B<1>
+
+Error: Invalid options, arguments, file permissions, or configuration issues (e.g., non-existent subnet, invalid IP).
+
+=back
+
+=head1 EXAMPLES
+
+=over 4
+
+=item Add a subnet and a pool:
+
+  C<si_mkdhcpserver --file /tmp/kea-dhcp4.conf --add-subnet 192.168.1.0/24 --add-pool 192.168.1.10 192.168.1.20>
+
+=item Add a client reservation to a subnet:
+
+  C<si_mkdhcpserver --file /tmp/kea-dhcp4.conf --add-client testclient 00:11:22:33:44:55 192.168.1.100>
+
+=item Add a global client reservation:
+
+  C<si_mkdhcpserver --file /tmp/kea-dhcp4.conf --add-client testclient 00:11:22:33:44:55 192.168.1.100 --global>
+
+=item Set different DNS servers for two subnets:
+
+  C<si_mkdhcpserver --file /tmp/kea-dhcp4.conf --dns-servers 8.8.8.8 --subnet 192.168.1.0/24 --dns-servers 1.1.1.1 --subnet 192.168.2.0/24>
+
+=item Set multiple options with different scopes:
+
+  C<si_mkdhcpserver --file /tmp/kea-dhcp4.conf --dns-domain example.com --dns-servers 8.8.8.8 --subnet 192.168.1.0/24 --staging-dir /mnt/client --client testclient>
+
+=item List subnets in CSV format:
+
+  C<si_mkdhcpserver --file /tmp/kea-dhcp4.conf --list-subnets --csv>
 
 =back
 
@@ -952,3 +935,4 @@ Copyright (C) 2025 Olivier Lahaye
 Licensed under the GNU General Public License v2 or later.
 
 =cut
+

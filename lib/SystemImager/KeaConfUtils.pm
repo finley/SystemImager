@@ -34,7 +34,7 @@ use JSON::PP;
 use File::Copy;
 use POSIX qw(strftime);
 use Text::Table;
-use SystemImager::IpUtils qw(valid_ip valid_fqdn ip_to_int first_usable_ip is_ip_in_network is_ip_in_range get_subnet_ip_range is_range_overlap get_network_interfaces get_local_ip);
+use SystemImager::IpUtils qw(valid_ip ip_to_int first_usable_ip is_ip_in_network is_ip_in_range get_subnet_ip_range is_range_overlap get_network_interfaces get_local_ip);
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -48,7 +48,7 @@ my %option_code_to_name = (
     119 => "domain-search",
     7   => "log-servers",
     66  => "next-server",
-    200 => "image-server",
+    200 => "image-servers",
     201 => "log-server-port",
     202 => "ssh-download-url",
     203 => "flamethrower-port-base",
@@ -113,7 +113,7 @@ sub init_kea_config {
                 "interfaces" => ["*"],
             },
             "option-def" => [
-                { "name" => "image-server", "code" => 200, "type" => "ipv4-address" },
+                { "name" => "image-servers", "code" => 200, "type" => "string"  },
                 { "name" => "log-server-port", "code" => 201, "type" => "uint16" },
                 { "name" => "ssh-download-url", "code" => 202, "type" => "string" },
                 { "name" => "flamethrower-port-base", "code" => 203, "type" => "uint16" },
@@ -448,7 +448,6 @@ sub del_pool {
 # Output: (1, message) on success, (0, error message) on failure
 sub add_client {
     my ($config, $name, $mac, $ip, $global) = @_;
-    return (0, "Invalid IP or MAC address") unless valid_ip($ip) && $mac =~ /^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/;
 
     my $subnet_ref;
     unless ($global) {

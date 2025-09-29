@@ -193,10 +193,6 @@ check_exit_code $EXIT_SUCCESS $si_exit_code "Add client exit code"
 # Accepts the message with or without the "to subnet 192.168.1.0/24" suffix
 check_output "$output" "Added client reservation testclient \(00:11:22:33:44:55, 192.168.1.100\)( to subnet 192.168.1.0/24)?" "Add client displays success message"
 check_config_consistency "Add client validation" $si_exit_code
-# Note: A Perl warning "Use of uninitialized value $ARGV[0] in pattern match (m//) at si_mkdhcpserver line 199" was observed.
-# This indicates a bug in si_mkdhcpserver. Suggestion: Modify line 199 to add a "defined $ARGV[0]" check:
-# Before: push @add_clients, shift @ARGV if $ARGV[0] =~ /^--global/;
-# After: push @add_clients, shift @ARGV if defined $ARGV[0] && $ARGV[0] =~ /^--global/;
 
 # Test 11: Add a client with IP outside subnet (should fail)
 print_test "Add a client with IP outside subnet"
@@ -249,8 +245,7 @@ print_test "Configure domain-name-servers"
 output=$($SI_MKDHCP --file "$CONFIG_FILE" --dns-servers 8.8.8.8 8.8.4.4 2>&1)
 si_exit_code=$?
 check_exit_code $EXIT_SUCCESS $si_exit_code "Configure domain-name-servers exit code"
-check_output "$output" "(Added|Updated) domain-name-servers to 8.8.8.8" "Configure domain-name-servers displays message for 8.8.8.8"
-check_output "$output" "(Added|Updated) domain-name-servers to 8.8.4.4" "Configure domain-name-servers displays message for 8.8.4.4"
+check_output "$output" "(Added|Updated) domain-name-servers to 8.8.8.8,8.8.4.4" "Configure domain-name-servers displays combined message"
 check_config_consistency "Configure domain-name-servers validation" $si_exit_code
 
 # Test 17: List subnets

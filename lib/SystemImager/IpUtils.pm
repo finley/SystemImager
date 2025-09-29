@@ -35,7 +35,7 @@ use IO::Interface::Simple;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(valid_ip valid_fqdn ip_to_int first_usable_ip is_ip_in_network is_ip_in_range get_subnet_ip_range is_range_overlap get_network_interfaces get_local_ip);
+our @EXPORT_OK = qw(valid_ip valid_fqdn valid_hostname ip_to_int first_usable_ip is_ip_in_network is_ip_in_range get_subnet_ip_range is_range_overlap get_network_interfaces get_local_ip);
 
 # valid_ip: Validate an IPv4 address
 # Input: IP address string
@@ -57,7 +57,17 @@ sub valid_ip {
 sub valid_fqdn {
     my ($fqdn) = @_;
     return 0 unless defined $fqdn;
-    return 1 if $fqdn =~ /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.$/;
+    return 1 if $fqdn =~ /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.?$/ && $fqdn =~ /\./;
+    return 0;
+}
+
+# valid_hostname: Validate a simple hostname (no domain)
+# Input: hostname string
+# Output: 1 if valid, 0 if invalid
+sub valid_hostname {
+    my ($hostname) = @_;
+    return 0 unless defined $hostname;
+    return 1 if $hostname =~ /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/ && $hostname !~ /\./;
     return 0;
 }
 
