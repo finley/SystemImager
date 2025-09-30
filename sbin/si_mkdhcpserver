@@ -135,7 +135,7 @@ sub check_arg {
     } elsif ($type eq 'host') {
 		# A host can be either an IPv4 address or an FQDN (with or without trailing dot)
         die "--$opt: Invalid host format (must be IPv4 or FQDN): $value\n"
-            unless valid_ip($value) || valid_fqdn($value);
+            unless valid_ip($value) || valid_hostname($value);
     } else {
         die "--$opt: Unknown validation type: $type\n";
     }
@@ -238,13 +238,13 @@ sub push_remaining_params {
 #   $values - Array reference, the values for the option
 #   $modifier - String, the modifier ("subnet", "client", or "global")
 #   $modifier_value - String or undef, the value associated with the modifier
-#   $option_name - String, the name of the option (e.g., "domain-name", "next-server")
+#   $option_name - String, the name of the option (e.g., "domain-name", "tftp-server-name")
 #   $multiple_values - Boolean, true if values should be joined into a CSV string
 # Returns: Array of ($success, $msg) where $success is a boolean and $msg is the status message
 # Dies: None
 sub set_option {
-    my ($config, $values, $modifier, $modifier_value, $option_name, $multiple_values) = @_;
-    my $value = $multiple_values ? join(",", @$values) : $values->[0];  # Use CSV for multiple values, first value otherwise
+    my ($config, $values, $modifier, $modifier_value, $option_name, $multiple_values, $separator) = @_;
+    my $value = $multiple_values ? join($separator, @$values) : $values->[0];  # Use CSV for multiple values, first value otherwise
     if ($modifier eq 'subnet') {
         print "Calling set_option($option_name, $value, $modifier_value)\n" if $debug >= 2;
         return SystemImager::KeaConfUtils::set_option($config, $option_name, $value, $modifier_value);
@@ -281,23 +281,27 @@ my %option_handlers = (
     },
     'dns-search' => {
         option_name => 'domain-search',
-        multiple_values => 0,  # Single value
+        multiple_values => 1,  # Multiple values, joined as SPACES
+		separator => ' ',
     },
     'dns-servers' => {
         option_name => 'domain-name-servers',
         multiple_values => 1,  # Multiple values, joined as CSV
+		separator => ',',
     },
     'image-servers' => {
         option_name => 'image-servers',
         multiple_values => 1,  # Multiple values, joined as CSV
+		separator => ',',
     },
     'boot-server' => {
-        option_name => 'next-server',
+        option_name => 'tftp-server-name',
         multiple_values => 0,  # Single value
     },
     'log-servers' => {
         option_name => 'log-servers',
         multiple_values => 1,  # Multiple values, joined as CSV
+		separator => ',',
     },
     'log-server-port' => {
         option_name => 'log-server-port',
@@ -356,7 +360,7 @@ GetOptions(
         my ($opt, $value) = @_;
         process_option_values($opt, $value, $option_arrays{'dns-domain'}{temp}, $option_arrays{'dns-domain'}{target}, $option_arrays{'dns-domain'}{arg_type});
     },
-    "dns-search=s"        => sub {
+    "dns-search=s{1,}"        => sub {
         my ($opt, $value) = @_;
         process_option_values($opt, $value, $option_arrays{'dns-search'}{temp}, $option_arrays{'dns-search'}{target}, $option_arrays{'dns-search'}{arg_type});
     },
@@ -592,7 +596,8 @@ foreach my $option (keys %option_handlers) {
             $modifier,
             $modifier_value,
             $handler->{option_name},
-            $handler->{multiple_values}
+            $handler->{multiple_values},
+			$handler->{separator}
         );
         unless ($success) {
             print STDERR "Error: $msg\n" unless $quiet;
@@ -773,7 +778,7 @@ Example: C<--image-servers server1.example.com server2.example.com>
 
 =item B<--boot-server> <ip> [--subnet <ip/mask>]
 
-Sets the DHCP option C<next-server> (boot server) to a single valid IP address. Applies globally unless C<--subnet> specifies a subnet.
+Sets the DHCP option C<tftp-server-name> (boot server) to a single valid IP address. Applies globally unless C<--subnet> specifies a subnet.
 
 Example: C<--boot-server 192.168.1.1 --subnet 192.168.1.0/24>
 

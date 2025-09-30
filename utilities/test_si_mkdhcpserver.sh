@@ -24,6 +24,11 @@
 #        This script exhaustively tests the features of si_mkdhcpserver
 #        using a configuration file in /tmp to avoid modifying system files.
 #        Each modification is validated with kea-dhcp4 -t.
+#
+# Test script for si_mkdhcpserver
+# This script exhaustively tests the features of si_mkdhcpserver
+# using a configuration file in /tmp to avoid modifying system files.
+# Each modification is validated with kea-dhcp4 -t.
 
 # Configuration
 TEST_DIR="/tmp/si_mkdhcpserver_test"
@@ -295,6 +300,24 @@ si_exit_code=$?
 check_exit_code $EXIT_FAILURE $si_exit_code "Incompatibility quiet with man exit code"
 check_output "$output" "--quiet: is incompatible with --help, --man or --debug" "Incompatibility quiet with man displays an error"
 # No file modification, so no kea-dhcp4 validation
+
+# Test 24: Configure boot-server
+print_test "Configure boot-server"
+output=$($SI_MKDHCP --file "$CONFIG_FILE" --boot-server 192.168.1.1 --subnet 192.168.1.0/24 2>&1)
+si_exit_code=$?
+check_exit_code $EXIT_SUCCESS $si_exit_code "Configure boot-server exit code"
+check_output "$output" "Added tftp-server-name as 192.168.1.1 in subnet 192.168.1.0/24" "Configure boot-server displays success message"
+check_config_consistency "Configure boot-server validation" $si_exit_code
+
+# Test 25: Configure dns-search with multiple domains
+print_test "Configure dns-search with multiple domains"
+output=$($SI_MKDHCP --file "$CONFIG_FILE" --dns-search domain1.example.com domain2.example.com domain3.example.com --subnet 192.168.1.0/24 2>&1)
+si_exit_code=$?
+check_exit_code $EXIT_SUCCESS $si_exit_code "Configure dns-search with multiple domains exit code"
+check_output "$output" "Added domain-search as domain1.example.com domain2.example.com domain3.example.com in subnet 192.168.1.0/24" "Configure dns-search displays success message"
+check_config_consistency "Configure dns-search with multiple domains validation" $si_exit_code
+# Vérifier que le fichier de configuration contient tous les domaines
+check_json_content "$CONFIG_FILE" '"domain-search".*"domain1.example.com domain2.example.com domain3.example.com"' "dns-search contains all domains separated by spaces"
 
 # Cleanup
 cleanup
